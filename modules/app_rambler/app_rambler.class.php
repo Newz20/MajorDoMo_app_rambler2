@@ -3,7 +3,7 @@ class app_rambler extends module {
 	function __construct() {
 		$this->name="app_rambler";
 		$this->title="Модуль Рамблер";
-		$this->module_category="<#LANG_SECTION_DEVICES#>";
+		$this->module_category="<#LANG_SECTION_APPLICATIONS#>";
 		$this->version="1.0 beta";
 		$this->checkInstalled();
 	}
