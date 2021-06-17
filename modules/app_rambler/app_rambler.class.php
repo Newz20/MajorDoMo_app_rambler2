@@ -1,5 +1,5 @@
 <?php
-class rambler_city extends module {
+class app_rambler extends module {
 	function __construct() {
 		$this->name="app_rambler";
 		$this->title="Модуль Рамблер";
