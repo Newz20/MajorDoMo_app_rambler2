@@ -96,6 +96,11 @@ class rambler_city extends module {
 			$out['CITY_DATA'] = SQLSelect('SELECT * FROM rambler_value WHERE city_id = '.DBSafe($this->id));
 	    }
 		
+		if($this->view_mode == 'savelink' && !empty($this->id)) {
+			//Действия при связке со свойствами, меняем в БД валуе и привязываем, далее редирект обратно
+			
+	    }
+		
 		
 		
 
