@@ -32,6 +32,7 @@ class app_rambler extends module {
 		global $view_mode;
 		global $edit_mode;
 		global $tab;
+		global $ajax;
 		
 		if (isset($id)) {
 			$this->id=$id;
@@ -47,6 +48,9 @@ class app_rambler extends module {
 		}
 		if (isset($tab)) {
 			$this->tab=$tab;
+		}
+		if (isset($ajax)) {
+			$this->ajax=$ajax;
 		}
 	}
 
@@ -82,13 +86,37 @@ class app_rambler extends module {
 		//Выгружаем список добавленых городов и отдаем в шаблон
 	    $out['CITY_ALL'] = SQLSelect('SELECT * FROM rambler_weather_city');
 
+		//Обработка AJAX 
+		if($this->ajax == 1) {
+			$out['IAMHERE'] = $this->wheisi();
+			die();
+    	}
+
+
 	    if($this->view_mode == 'addcity') {
 			//Действия после нажатия кнопки ДОБАВИТЬ ГОРОД
 			//Сдесь будет другой шаблон
+			//($this->wheisi()) ? $out['IAMHERE'] = $this->wheisi() : $out['IAMHERE'] = '';
     	}
 	
 	    if($this->view_mode == 'citysearch' && !empty($this->id)) {
 			//Действия после поиска и передачи города
+			$data = $this->callAPI('https://weather.rambler.ru/api/v3/map_towns/?url_path='.$this->id);
+			$data = json_decode($data, TRUE);
+			
+			$ifExist = SQLSelectOne("SELECT id FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($data['current_town']["url_path"])."'");
+			
+			if(!$ifExist) {
+				$rec['TITLE'] = $data['current_town']["name"];
+				$rec['URL_PATH'] = $data['current_town']["url_path"];
+				$rec['GEO_CODE'] = $data['current_town']["geo_location"]["lat"].', '.$data['current_town']["geo_location"]["lng"];
+				$rec['ADD'] = time();
+				
+				SQLInsert('rambler_weather_city', $rec);
+				
+				$this->loadWeather($rec['URL_PATH']);
+			}
+			$this->redirect('?');
 	    }
 	
 		if($this->view_mode == 'cityshow' && !empty($this->id)) {
@@ -106,10 +134,51 @@ class app_rambler extends module {
 
 		$out['VERSION_MODULE'] = $this->version;
 	}
+	
+	function loadWeather($url_path = '') {
+		if($url_path != '') {
+			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($url_path)."'");
+		} else {
+			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city");
+		}
+		
+		foreach($getAllCity as $key => $value) {
+			$data = $this->callAPI('https://weather.rambler.ru/api/v3/now/?only_current=1&url_path='.$value['URL_PATH']);
+			$data = json_decode($data, TRUE);
+			var_dump($data);
+		}
+	}
+	
+	function usual(&$out) {
+		//Обработка AJAX 
+		global $request;
+		
+		if($this->ajax == 1 && $request == 'whereiam') {
+			echo $this->whereiam();
+			die();
+    	}
+	}
+	
+	function callAPI($url) {
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
+		curl_setopt($ch, CURLOPT_VERBOSE, true);
+		curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+		$html = curl_exec($ch);
+		curl_close($ch);
+		 
+		return $html;
+	}
 
+	function whereiam() {
+		$data = $this->callAPI('https://weather.rambler.ru/location/current');
+		//$data = json_decode($data, TRUE);
+		return $data;
+	}
 
 	function DeleteLinkedProperties() {
-		$properties = SQLSelect("SELECT * FROM rambler_value WHERE LINKED_OBJECT != '' AND LINKED_PROPERTY != ''");
+		$properties = SQLSelect("SELECT * FROM rambler_weather_value WHERE LINKED_OBJECT != '' AND LINKED_PROPERTY != ''");
 
 		if (!empty($properties)) {
 			foreach ($properties as $prop) {
@@ -136,6 +205,8 @@ class app_rambler extends module {
       $data = <<<EOD
         rambler_weather_city: ID int(15) unsigned NOT NULL auto_increment
         rambler_weather_city: TITLE varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_city: URL_PATH varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_city: GEO_CODE varchar(255) NOT NULL DEFAULT ''
         rambler_weather_city: ADD varchar(255) NOT NULL DEFAULT ''
 
 
