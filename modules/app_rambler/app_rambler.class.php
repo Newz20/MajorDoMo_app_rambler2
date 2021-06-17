@@ -79,22 +79,26 @@ class rambler_city extends module {
    
 
     function admin(&$out) {
-        	$ifexist = SQLSelect('SELECT id FROM rambler_city');
-	    if(empty($ifexist)) $out['NO_CITY'] = 1;
+		//Выгружаем список добавленых городов и отдаем в шаблон
+	    $out['CITY_ALL'] = SQLSelect('SELECT * FROM rambler_city');
 
 	    if($this->view_mode == 'addcity') {
-		unset($out['NO_CITY']);
-		$out['ADD_CITY_FORM'] == '1';
+			//Действия после нажатия кнопки ДОБАВИТЬ ГОРОД
+			//Сдесь будет другой шаблон
     	}
 	
-	    if($this->view_mode == 'citySearch' && !empty($this->id)) {
-		$this->id = strip_tags($this->id);
-		var_dump($this->id);
+	    if($this->view_mode == 'citysearch' && !empty($this->id)) {
+			//Действия после поиска и передачи города
 	    }
 	
+		if($this->view_mode == 'cityshow' && !empty($this->id)) {
+			//Действия при входе в город, тут выгружаем все значения
+			$out['CITY_DATA'] = SQLSelect('SELECT * FROM rambler_value WHERE city_id = '.DBSafe($this->id));
+	    }
 		
-		$out['CYCLE_STATUS'] = getGlobal("ThisComputer.cycle_{$this->name}");
 		
+		
+
 		$out['VERSION_MODULE'] = $this->version;
 	}
 
