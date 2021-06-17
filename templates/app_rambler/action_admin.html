@@ -1,19 +1,14 @@
-[#if NO_CITY == 1#]
-Нет городов!
-
-<a href="?view_mode=addcity">Добавить</a>
-[#endif#]
-
-[#if ADD_CITY_FORM == "1"#]
-Тут форми добавления<br><br><Br>
-[#endif#]
-
-
-
+[#if VIEW_MODE == 'addcity'#]
 <script>
 function searchCity() {
-	input = $('#searchCityInput').val();
-	//count = input.length;
+	$('#loaderResult').show();
+	input = $('#searchInput').val();
+	count = input.length;
+
+	if(count == 0) {
+		$('#loaderResult').hide('fast');
+		$('#result').html('');
+	}
 	
 	$.ajax({
 		url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(input)+'&count=10',
@@ -22,24 +17,117 @@ function searchCity() {
 			//console.log(data.items[0]);
 			$('#result').html('');
 			
+			if(data.items.length == 0) {
+				$('#result').html('<div class="alert alert-danger">Упс! Мы не нашли такого города...</div>');
+			}
+			
+			$('#loaderResult').hide('fast');
 			$.each(data.items, function(indexCityList,valueCityList){
 				$.each(valueCityList, function(index,value) {
 					if(index == 'city') {
 						old_text = $('#result').html();
-						$('#result').html(old_text + '<a href="?view_mode=citySearch&id='+valueCityList.url_path+'">'+value+'</a><br>');
+						$('#result').html(old_text + '<li class="list-group-item"><span class="badge" style="background:white">'+valueCityList.desc+ ', ' +valueCityList.temperature+'</span><a href="?view_mode=citysearch&id='+valueCityList.url_path+'" style="text-decoration: none;"><span style="color:gray">'+valueCityList.region+' → </span><b>'+valueCityList.city+'</b></a></li>');
 					}
-					//console.log('Индекс: ' + index + '; Значение: ' + value);
 				});
 			});
 		}
 	});
 }
 
+function whereiam() {
+	$('#loaderWhereIAm').show();
+	
+	$.ajax({
+		url: '/ajax/app_rambler.html?ajax=1&request=whereiam',
+		success: function(data){
+			data = JSON.parse(data);
+
+			$.ajax({
+				url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(data.name)+'&count=1',
+				success: function(data){
+					$('#loaderWhereIAm').hide();
+					$('#whereiamresult').html('<li class="list-group-item" style="border: 1px solid green;margin-bottom: 10px;"><span class="badge" style="background:white">'+data.items[0].desc+ ', ' +data.items[0].temperature+'</span><a href="?view_mode=citysearch&id='+data.items[0].url_path+'" style="text-decoration: none;"><span class="badge" style="margin-right: 10px;background:#5cb85c">Мой город</span> <span style="color:gray">'+data.items[0].region+' → </span><b>'+data.items[0].city+'</b></a></li>');
+				}
+			});
+		}
+	});
+}
+
+$(function() {
+	[#if IAMHERE != ''#]searchCity();[#endif#]
+	whereiam();
+});
 </script>
 
+<div class="row" style="margin-right: -15px;margin-left: -15px;">
+	<div class="col-md-12" style="margin-bottom: 15px;">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Добавить новый город</h3>
+			</div>
+			<div class="panel-body">
+				<div class="row" style="margin:0px">
+					<div class="col-md-12 text-right" style="margin-bottom: 15px;padding: 0px;">
+						<div id="loaderWhereIAm" style="display:none;margin-bottom: 15px;color: gray">
+							<img src="/templates/app_rambler/assets/img/loader.gif" style="width: 18px;"> Ищем ваш город...
+						</div>
+					</div>
+				</div>
+				
+				
+				<input type="text" class="form-control" id="searchInput" onInput="searchCity();" value="[#IAMHERE#]" placeholder="Поиск города по названию..." autocomplete="off">
+				
+				<div id="loaderResult" style="display:none;text-align: center;margin: 15px;font-weight: bold;">
+					<img src="/templates/app_rambler/assets/img/loader.gif" style="width: 24px;"> Ищем города...
+				</div>
+				
+				<ul class="list-group" style="margin-top: 10px;">
+					<span id="whereiamresult"></span>
+					<span id="result"></span>
+				</ul>
+			</div>
+		</div>
+		
+	
+	</div>
+</div>
+[#endif#]
 
-<input type="text" class="form-control" id="searchCityInput" onInput="searchCity();" placeholder="Искать">
-
-<div id="result">
-	Введите запрос....
+<div class="row" style="margin-right: -15px;margin-left: -15px;">
+	<div class="col-md-12 text-right" style="margin-bottom: 15px;">
+		<a class="btn btn-default btn-success" href="?view_mode=addcity">Добавить новый город</a>
+	</div>
+	<div class="col-md-12" style="margin-bottom: 15px;">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Получение погоды</h3>
+			</div>
+			<div class="panel-body">
+				<div class="table-responsive">
+					<table class="table table-bordered">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>URL Path</th>
+								<th>Город</th>
+								<th>Обновлен</th>
+								<th>Текущая</th>
+							</tr>
+						</thead>
+						<tbody>
+						[#begin CITY_ALL#]
+						<tr>
+						<td>[#ID#]</td>
+						<td>[#URL_PATH#]</td>
+						<td>[#TITLE#]</td>
+						<td>[#UPDATE#]</td>
+						<td>[#CURRENT#]</td>
+						</tr>
+						[#end CITY_ALL#]
+						</tbody>
+						</table>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
