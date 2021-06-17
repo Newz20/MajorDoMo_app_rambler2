@@ -3,7 +3,7 @@ class app_rambler extends module {
 	function __construct() {
 		$this->name="app_rambler";
 		$this->title="Модуль Рамблер";
-		$this->module_category="<#LANG_SECTION_DEVICES#>";
+		$this->module_category="<#LANG_SECTION_APPLICATIONS#>";
 		$this->version="1.0 beta";
 		$this->checkInstalled();
 	}
@@ -80,7 +80,7 @@ class app_rambler extends module {
 
     function admin(&$out) {
 		//Выгружаем список добавленых городов и отдаем в шаблон
-	    $out['CITY_ALL'] = SQLSelect('SELECT * FROM rambler_city');
+	    $out['CITY_ALL'] = SQLSelect('SELECT * FROM rambler_weather_city');
 
 	    if($this->view_mode == 'addcity') {
 			//Действия после нажатия кнопки ДОБАВИТЬ ГОРОД
@@ -93,7 +93,7 @@ class app_rambler extends module {
 	
 		if($this->view_mode == 'cityshow' && !empty($this->id)) {
 			//Действия при входе в город, тут выгружаем все значения
-			$out['CITY_DATA'] = SQLSelect('SELECT * FROM rambler_value WHERE city_id = '.DBSafe($this->id));
+			$out['CITY_DATA'] = SQLSelect('SELECT * FROM rambler_weather_value WHERE city_id = '.DBSafe($this->id));
 	    }
 		
 		if($this->view_mode == 'savelink' && !empty($this->id)) {
