@@ -79,7 +79,7 @@ class rambler_city extends module {
    
 
     function admin(&$out) {
-        $ifexist = SQLSelect('SELECT id FROM rambler_city');
+        	$ifexist = SQLSelect('SELECT id FROM rambler_city');
 	    if(empty($ifexist)) $out['NO_CITY'] = 1;
 
 	    if($this->view_mode == 'addcity') {
@@ -99,16 +99,8 @@ class rambler_city extends module {
 	}
 
 
-
-
-
-
-
-
-
-
 	function DeleteLinkedProperties() {
-		$properties = SQLSelect("SELECT * FROM rambler_city WHERE LINKED_OBJECT != '' AND LINKED_PROPERTY != ''");
+		$properties = SQLSelect("SELECT * FROM rambler_value WHERE LINKED_OBJECT != '' AND LINKED_PROPERTY != ''");
 
 		if (!empty($properties)) {
 			foreach ($properties as $prop) {
@@ -117,72 +109,17 @@ class rambler_city extends module {
 		}
 	}
 	
-	function DeleteCycleProperties() {
-      $cycle_name = 'cycle_' . $this->name;
-      $cycle_props = array("{$cycle_name}Run", "{$cycle_name}Control", "{$cycle_name}Disabled", "{$cycle_name}AutoRestart");
-
-      $object = getObject('ThisComputer');
-
-      foreach ($cycle_props as $property) {
-         $property_id = $object->getPropertyByName($property, $object->class_id, $object->id);
-         if ($property_id) {
-            $value_id = getValueIdByName($object->object_title, $property);
-            if ($value_id) {
-               SQLExec("DELETE FROM phistory WHERE VALUE_ID={$value_id}");
-               SQLExec("DELETE FROM pvalues WHERE ID={$value_id}");
-            }
-            if ($object->class_id != 0) {
-               SQLExec("DELETE FROM properties WHERE ID={$property_id}");
-            }
-          }
-      }
-
-      SQLExec("DELETE FROM cached_values WHERE KEYWORD LIKE '%{$cycle_name}%'");
-      SQLExec("DELETE FROM cached_ws WHERE PROPERTY LIKE '%{$cycle_name}%'");
-   }
-	
-	function processCycle() {
-		setGlobal("cycle_{$this->name}", '1');
-
-		$this->getInfomation();
-	}
-
-	function install($data='') {
-		//Укажем нормальную версию модуля, а то че как криво. Вообще нужно всем так делать.		
-		//SQLExec("UPDATE `plugins` SET `CURRENT_VERSION` = '".dbSafe($this->version)."' WHERE `MODULE_NAME` = '".dbSafe($this->name)."';");
-		
+	function install($data='') {	
 		parent::install();
 	}
 	
 	function uninstall() {
-		echo '<br>' . date('H:i:s') . " Uninstall module {$this->name}.<br>";
-
-		// Остановим цикл модуля.
-		echo date('H:i:s') . " Stopping cycle cycle_{$this->name}.php.<br>";
-		setGlobal("cycle_{$this->name}", 'stop');
-		// Нужна пауза, чтобы главный цикл обработал запрос.
-		$i = 0;
-		while ($i < 6) {
-		echo '.';
-		$i++; 
-		sleep(1);
-		}
-
-		// Удалим слинкованные свойства объектов у метрик каждого ТВ.
-		echo '<br>' . date('H:i:s') . ' Delete linked properties.<br>';
 		$this->DeleteLinkedProperties();
 
 		// Удаляем таблицы модуля из БД.
 		echo date('H:i:s') . ' Delete DB tables.<br>';
 		SQLExec('DROP TABLE IF EXISTS rambler_city');
 		SQLExec('DROP TABLE IF EXISTS rambler_value');
-
-		// Удаляем служебные свойства контроля состояния цикла у объекта ThisComputer.
-		echo date('H:i:s') . ' Delete cycles properties.<br>';
-		$this->DeleteCycleProperties();
-
-		// Удаляем модуль с помощью "родительской" функции ядра.
-		echo date('H:i:s') . ' Delete files and remove frome system.<br>';
 		parent::uninstall();
 	}
 	
@@ -191,8 +128,6 @@ class rambler_city extends module {
         rambler_city: ID int(15) unsigned NOT NULL auto_increment
         rambler_city: TITLE varchar(255) NOT NULL DEFAULT ''
         rambler_city: ADD varchar(255) NOT NULL DEFAULT ''
-
-	
 
 
 		rambler_value: ID int(15) unsigned NOT NULL auto_increment
@@ -203,9 +138,6 @@ class rambler_city extends module {
         rambler_value: LINKED_OBJECT varchar(100) NOT NULL DEFAULT ''
         rambler_value: LINKED_PROPERTY varchar(100) NOT NULL DEFAULT ''
         rambler_value: LINKED_METHOD varchar(100) NOT NULL DEFAULT ''
-
-
-        
 EOD;
 		parent::dbInstall($data);
    }
