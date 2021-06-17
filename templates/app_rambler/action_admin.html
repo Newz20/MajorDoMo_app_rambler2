@@ -1,0 +1,45 @@
+[#if NO_CITY == 1#]
+Нет городов!
+
+<a href="?view_mode=addcity">Добавить</a>
+[#endif#]
+
+[#if ADD_CITY_FORM == "1"#]
+Тут форми добавления<br><br><Br>
+[#endif#]
+
+
+
+<script>
+function searchCity() {
+	input = $('#searchCityInput').val();
+	//count = input.length;
+	
+	$.ajax({
+		url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(input)+'&count=10',
+		success: function(data){
+			//data = JSON.parse(data);
+			//console.log(data.items[0]);
+			$('#result').html('');
+			
+			$.each(data.items, function(indexCityList,valueCityList){
+				$.each(valueCityList, function(index,value) {
+					if(index == 'city') {
+						old_text = $('#result').html();
+						$('#result').html(old_text + '<a href="?view_mode=citySearch&id='+valueCityList.url_path+'">'+value+'</a><br>');
+					}
+					//console.log('Индекс: ' + index + '; Значение: ' + value);
+				});
+			});
+		}
+	});
+}
+
+</script>
+
+
+<input type="text" class="form-control" id="searchCityInput" onInput="searchCity();" placeholder="Искать">
+
+<div id="result">
+	Введите запрос....
+</div>
