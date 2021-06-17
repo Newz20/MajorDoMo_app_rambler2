@@ -127,26 +127,26 @@ class app_rambler extends module {
 
 		// Удаляем таблицы модуля из БД.
 		echo date('H:i:s') . ' Delete DB tables.<br>';
-		SQLExec('DROP TABLE IF EXISTS rambler_city');
-		SQLExec('DROP TABLE IF EXISTS rambler_value');
+		SQLExec('DROP TABLE IF EXISTS rambler_weather_city');
+		SQLExec('DROP TABLE IF EXISTS rambler_weather_value');
 		parent::uninstall();
 	}
 	
 	function dbInstall($data = '') {
       $data = <<<EOD
-        rambler_city: ID int(15) unsigned NOT NULL auto_increment
-        rambler_city: TITLE varchar(255) NOT NULL DEFAULT ''
-        rambler_city: ADD varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_city: ID int(15) unsigned NOT NULL auto_increment
+        rambler_weather_city: TITLE varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_city: ADD varchar(255) NOT NULL DEFAULT ''
 
 
-		rambler_value: ID int(15) unsigned NOT NULL auto_increment
-        rambler_value: CITY_ID varchar(100) NOT NULL DEFAULT ''
-        rambler_value: TITLE varchar(255) NOT NULL DEFAULT ''
-        rambler_value: VALUE varchar(255) NOT NULL DEFAULT ''
-        rambler_value: UPDATE varchar(255) NOT NULL DEFAULT ''
-        rambler_value: LINKED_OBJECT varchar(100) NOT NULL DEFAULT ''
-        rambler_value: LINKED_PROPERTY varchar(100) NOT NULL DEFAULT ''
-        rambler_value: LINKED_METHOD varchar(100) NOT NULL DEFAULT ''
+		rambler_weather_value: ID int(15) unsigned NOT NULL auto_increment
+        rambler_weather_value: CITY_ID varchar(100) NOT NULL DEFAULT ''
+        rambler_weather_value: TITLE varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_value: VALUE varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_value: UPDATE varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_value: LINKED_OBJECT varchar(100) NOT NULL DEFAULT ''
+        rambler_weather_value: LINKED_PROPERTY varchar(100) NOT NULL DEFAULT ''
+        rambler_weather_value: LINKED_METHOD varchar(100) NOT NULL DEFAULT ''
 EOD;
 		parent::dbInstall($data);
    }
