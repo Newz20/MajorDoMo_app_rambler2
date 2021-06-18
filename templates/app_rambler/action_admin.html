@@ -2,12 +2,13 @@
 <script>
 function searchCity() {
 	$('#loaderResult').show();
+	$('#result').show();
 	input = $('#searchInput').val();
 	count = input.length;
 
 	if(count == 0) {
 		$('#loaderResult').hide('fast');
-		$('#result').html('');
+		$('#result').hide();
 	}
 	
 	$.ajax({
@@ -26,7 +27,10 @@ function searchCity() {
 				$.each(valueCityList, function(index,value) {
 					if(index == 'city') {
 						old_text = $('#result').html();
-						$('#result').html(old_text + '<li class="list-group-item"><span class="badge" style="background:white">'+valueCityList.desc+ ', ' +valueCityList.temperature+'</span><a href="?view_mode=citysearch&id='+valueCityList.url_path+'" style="text-decoration: none;"><span style="color:gray">'+valueCityList.region+' → </span><b>'+valueCityList.city+'</b></a></li>');
+						$('#result').html(old_text + '<li class="list-group-item">'+
+						'<span class="badge" style="background: white;color: black;padding: 0px;margin-top: -5px;font-size: 1.5rem;"><img style="width: 30px;vertical-align: middle;" src="/templates/app_rambler/assets/icons/fill/all/'+valueCityList.type+'.svg">' +valueCityList.temperature+'</span>'+
+						'<a href="?view_mode=citysearch&id='+valueCityList.url_path+'" style="text-decoration: none;">'+
+						'<span style="color:gray">'+valueCityList.region+' → </span><b>'+valueCityList.city+'</b></a></li>');
 					}
 				});
 			});
@@ -45,8 +49,12 @@ function whereiam() {
 			$.ajax({
 				url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(data.name)+'&count=1',
 				success: function(data){
+					if(data.items[0].temperature > 0) data.items[0].temperature_simb = '+';
 					$('#loaderWhereIAm').hide();
-					$('#whereiamresult').html('<li class="list-group-item" style="border: 1px solid green;margin-bottom: 10px;"><span class="badge" style="background:white">'+data.items[0].desc+ ', ' +data.items[0].temperature+'</span><a href="?view_mode=citysearch&id='+data.items[0].url_path+'" style="text-decoration: none;"><span class="badge" style="margin-right: 10px;background:#5cb85c">Мой город</span> <span style="color:gray">'+data.items[0].region+' → </span><b>'+data.items[0].city+'</b></a></li>');
+					$('#whereiamresult').html('<li class="list-group-item" style="border: 1px solid green;margin-bottom: 10px;">'+
+					'<span class="badge" style="background: white;color: black;padding: 0px;margin-top: -5px;font-size: 1.5rem;"><img style="width: 30px;vertical-align: middle;" src="/templates/app_rambler/assets/icons/fill/all/'+data.items[0].type+'.svg">' +data.items[0].temperature_simb+data.items[0].temperature+'</span>'+
+					'<a href="?view_mode=citysearch&id='+data.items[0].url_path+'" style="text-decoration: none;">'+
+					'<span class="badge" style="margin-right: 10px;background:#5cb85c">Мой город</span> <span style="color:gray">'+data.items[0].region+' → </span><b>'+data.items[0].city+'</b></a></li>');
 				}
 			});
 		}
@@ -74,8 +82,8 @@ $(function() {
 					</div>
 				</div>
 				
-				
 				<input type="text" class="form-control" id="searchInput" onInput="searchCity();" value="[#IAMHERE#]" placeholder="Поиск города по названию..." autocomplete="off">
+				
 				
 				<div id="loaderResult" style="display:none;text-align: center;margin: 15px;font-weight: bold;">
 					<img src="/templates/app_rambler/assets/img/loader.gif" style="width: 24px;"> Ищем города...
@@ -93,6 +101,7 @@ $(function() {
 </div>
 [#endif#]
 
+[#if VIEW_MODE != "loaddata" AND VIEW_MODE != "addcity"#]
 <div class="row" style="margin-right: -15px;margin-left: -15px;">
 	<div class="col-md-12 text-right" style="margin-bottom: 15px;">
 		<a class="btn btn-default btn-success" href="?view_mode=addcity">Добавить новый город</a>
@@ -112,6 +121,7 @@ $(function() {
 								<th>Город</th>
 								<th>Обновлен</th>
 								<th>Текущая</th>
+								<th></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -121,7 +131,14 @@ $(function() {
 						<td>[#URL_PATH#]</td>
 						<td>[#TITLE#]</td>
 						<td>[#UPDATE#]</td>
-						<td>[#CURRENT#]</td>
+						<td [#if CURRENT_WEATHER_TEMPERATURE#]style="background-image: url(/templates/app_rambler/assets/icons/fill/all/[#CURRENT_WEATHER_ICON#].svg);background-repeat: no-repeat;background-size: 40%;background-position: right center;"[#endif#]>[#CURRENT_WEATHER_TEMPERATURE#]</td>
+						<td class="text-right">
+							<div class="btn-group">
+								<a href="?view_mode=loaddata&id=[#ID#]" class="btn btn-default btn-xs">Данные</a>
+								<a href="?view_mode=loadweather&id=[#URL_PATH#]" class="btn btn-warning btn-xs">Обновить</a>
+								<a href="?view_mode=deletecity&id=[#ID#]" class="btn btn-danger btn-xs">Удалить</a>
+							</div>
+						</td>
 						</tr>
 						[#end CITY_ALL#]
 						</tbody>
@@ -131,3 +148,95 @@ $(function() {
 		</div>
 	</div>
 </div>
+[#endif#]
+[#if VIEW_MODE == "loaddata"#]
+<div class="row" style="margin-right: -15px;margin-left: -15px;">
+	<div class="col-md-12 text-right" style="margin-bottom: 15px;">
+		<a class="btn btn-default btn-success" href="?view_mode=addcity">Добавить новый город</a>
+	</div>
+	<div class="col-md-12" style="margin-bottom: 15px;">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Информация о городе</h3>
+			</div>
+			<div class="panel-body">
+				<div class="table-responsive">
+					<table class="table table-bordered">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>URL Path</th>
+								<th>Город</th>
+								<th>Обновлен</th>
+								<th>Текущая</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+						[#begin CITY_INFO#]
+						<tr>
+						<td>[#ID#]</td>
+						<td>[#URL_PATH#]</td>
+						<td>[#TITLE#]</td>
+						<td>[#UPDATE#]</td>
+						<td [#if CURRENT_WEATHER_TEMPERATURE#]style="background-image: url(/templates/app_rambler/assets/icons/fill/all/[#CURRENT_WEATHER_ICON#].svg);background-repeat: no-repeat;background-size: 40%;background-position: right center;"[#endif#]>[#CURRENT_WEATHER_TEMPERATURE#]</td>
+						<td class="text-right">
+							<div class="btn-group">
+								<a href="?view_mode=loaddata&id=[#ID#]" class="btn btn-default btn-xs">Данные</a>
+								<a href="?view_mode=loadweather&id=[#URL_PATH#]" class="btn btn-warning btn-xs">Обновить</a>
+								<a class="btn btn-danger btn-xs">Удалить</a>
+							</div>
+						</td>
+						</tr>
+						[#end CITY_INFO#]
+						</tbody>
+						</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+[#begin CITY_DATA#]
+<div class="row" style="margin-right: -15px;margin-left: -15px;">
+	<div class="col-md-12" style="margin-bottom: 15px;">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Выгрузка данных</h3>
+			</div>
+			<div class="panel-body">
+				<div class="table-responsive">
+					<table class="table table-hover" style="border: 1px solid gainsboro;">
+						<thead>
+							<tr>
+								<th>Название</th>
+								<th>Значение</th>
+								<th>Обновлен</th>
+								<th>Объект</th>
+								<th>Свойство</th>
+								<th>Метод</th>
+							</tr>
+						</thead>
+						<tbody>
+						[#begin CURRENT_WEATHER#]
+							<tr>
+							<td>
+								[#TITLE#]
+								<p style="font-size: 1rem;color: gray;text-transform: lowercase;">[#CONTENT_TYPE#]</p>
+							</td>
+							<td>[#VALUE#]</td>
+							<td>[#UPDATE_HUMAN#]</td>
+							<td><input type="text" name="linked_object[#ID#]" id="linked_object[#ID#]" value="[#LINKED_OBJECT#]"></td>
+							<td><input type="text" name="linked_property[#ID#]" id="linked_property[#ID#]" value="[#LINKED_PROPERTY#]"></td>
+							<td><input type="text" name="linked_method[#ID#]" id="linked_method[#ID#]" value="[#LINKED_METHOD#]"></td>
+							[#module name="linkedobject" object_field="linked_object[#ID#]" property_field="linked_property[#ID#]" method_field="linked_method[#ID#]" width="100%"#]
+							</tr>
+						[#end CURRENT_WEATHER#]
+						</tbody>
+						</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+[#end CITY_DATA#]
+[#endif#]
