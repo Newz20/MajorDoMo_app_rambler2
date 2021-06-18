@@ -83,28 +83,27 @@ class app_rambler extends module {
    
 
     function admin(&$out) {
-		//Выгружаем список добавленых городов и отдаем в шаблон
-	    $out['CITY_ALL'] = SQLSelect('SELECT * FROM rambler_weather_city');
+		if(empty($this->view_mode)) {
+			//Выгружаем список добавленых городов и отдаем в шаблон
+			$out['CITY_ALL'] = SQLSelect('SELECT * FROM rambler_weather_city');
+			foreach($out['CITY_ALL'] as $key => $value) {
+				$data = SQLSelect("SELECT * FROM rambler_weather_value WHERE CITY_ID = '".$value['ID']."' AND (TITLE = 'current_weather.icon' OR TITLE = 'current_weather.temperature')");
+				foreach($data as $cityValueKey => $cityValueData) {
+					if($cityValueData['TITLE'] == 'current_weather.icon') $out['CITY_ALL'][$key]['CURRENT_WEATHER_ICON'] = $cityValueData['VALUE'];
+					if($cityValueData['TITLE'] == 'current_weather.temperature') {
+						$out['CITY_ALL'][$key]['CURRENT_WEATHER_TEMPERATURE'] = $cityValueData['VALUE'];
+						$out['CITY_ALL'][$key]['UPDATE'] = date('d.m.Y H:i', $cityValueData['UPDATE']);
+					}
+				}
+			}
+		}
 
-		//Обработка AJAX 
-		if($this->ajax == 1) {
-			$out['IAMHERE'] = $this->wheisi();
-			die();
-    	}
-
-
-	    if($this->view_mode == 'addcity') {
-			//Действия после нажатия кнопки ДОБАВИТЬ ГОРОД
-			//Сдесь будет другой шаблон
-			//($this->wheisi()) ? $out['IAMHERE'] = $this->wheisi() : $out['IAMHERE'] = '';
-    	}
-	
 	    if($this->view_mode == 'citysearch' && !empty($this->id)) {
 			//Действия после поиска и передачи города
 			$data = $this->callAPI('https://weather.rambler.ru/api/v3/map_towns/?url_path='.$this->id);
 			$data = json_decode($data, TRUE);
 			
-			$ifExist = SQLSelectOne("SELECT id FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($data['current_town']["url_path"])."'");
+			$ifExist = SQLSelectOne("SELECT ID FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($data['current_town']["url_path"])."'");
 			
 			if(!$ifExist) {
 				$rec['TITLE'] = $data['current_town']["name"];
@@ -114,19 +113,43 @@ class app_rambler extends module {
 				
 				SQLInsert('rambler_weather_city', $rec);
 				
-				$this->loadWeather($rec['URL_PATH']);
+				$this->loadWeatherNow($rec['URL_PATH']);
 			}
 			$this->redirect('?');
 	    }
 	
-		if($this->view_mode == 'cityshow' && !empty($this->id)) {
+		if($this->view_mode == 'loaddata' && !empty($this->id)) {
 			//Действия при входе в город, тут выгружаем все значения
-			$out['CITY_DATA'] = SQLSelect('SELECT * FROM rambler_weather_value WHERE city_id = '.DBSafe($this->id));
+			$out['CITY_INFO'] = SQLSelect('SELECT * FROM rambler_weather_city WHERE id = '.DBSafe($this->id));
+			$arrayInDB = SQLSelect('SELECT * FROM rambler_weather_value WHERE city_id = '.DBSafe($this->id));
+			$arrayReady = [];
+			$arrayOut = [];
+			
+			foreach($arrayInDB as $key => $value) {
+				$searchType = explode('.', $value["TITLE"]);
+				$arrayInDB[$key]["TITLE"] = $searchType[1];
+				$arrayInDB[$key]["CONTENT_TYPE"] = mb_strtoupper($searchType[0]);
+				$arrayInDB[$key]["UPDATE_HUMAN"] = date('d.m.Y H:i', $value["UPDATE"]);
+				if(in_array($searchType[0], $arrayReady) == false) $arrayReady[] = mb_strtoupper($searchType[0]);
+				
+			}
+			
+			foreach($arrayReady as $value) {
+				$arrayOut[$value] = $arrayInDB;
+			}
+			
+			$out['CITY_DATA'] = $arrayOut;
 	    }
 		
 		if($this->view_mode == 'savelink' && !empty($this->id)) {
 			//Действия при связке со свойствами, меняем в БД валуе и привязываем, далее редирект обратно
 			
+	    }
+		
+		if($this->view_mode == 'loadweather' && !empty($this->id)) {
+			//Действия при ручном обновлении
+			$this->loadWeatherNow($this->id);
+			$this->redirect('?');
 	    }
 		
 		
@@ -135,7 +158,7 @@ class app_rambler extends module {
 		$out['VERSION_MODULE'] = $this->version;
 	}
 	
-	function loadWeather($url_path = '') {
+	function loadWeatherNow($url_path = '') {
 		if($url_path != '') {
 			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($url_path)."'");
 		} else {
@@ -145,7 +168,28 @@ class app_rambler extends module {
 		foreach($getAllCity as $key => $value) {
 			$data = $this->callAPI('https://weather.rambler.ru/api/v3/now/?only_current=1&url_path='.$value['URL_PATH']);
 			$data = json_decode($data, TRUE);
-			var_dump($data);
+			
+			foreach($data["current_weather"] as $weatherNowKey => $weatherNowValue) {
+				if(!is_array($weatherNowValue)) {
+					$rec['TITLE'] = 'current_weather.'.$weatherNowKey;
+					$rec['VALUE'] = $weatherNowValue;
+					$rec['CITY_ID'] = $value['ID'];
+					$rec['UPDATE'] = time();
+					
+					if($weatherNowKey == 'temperature' && $weatherNowValue > 0) {
+						$rec['VALUE'] = '+'.$weatherNowValue;
+					}
+					
+					$ifExist = SQLSelectOne("SELECT ID FROM rambler_weather_value WHERE TITLE = '".$rec['TITLE']."' AND CITY_ID = '".$rec['CITY_ID']."'");
+					if(!$ifExist) {
+						SQLInsert('rambler_weather_value', $rec);
+					} else {
+						debmes('UPDATE');
+						$rec['ID'] = $ifExist['ID'];
+						SQLUpdate('rambler_weather_value', $rec);
+					}
+				}
+			} 
 		}
 	}
 	
