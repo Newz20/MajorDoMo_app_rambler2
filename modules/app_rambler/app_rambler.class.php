@@ -148,14 +148,53 @@ class app_rambler extends module {
 		
 		if($this->view_mode == 'loadweather' && !empty($this->id)) {
 			//Действия при ручном обновлении
+			
 			$this->loadWeatherNow($this->id);
+			//echo '<pre>';
+			//var_dump($this->loadWeatherNow($this->id));
+			//die();
+			$this->redirect('?');
+	    }
+		
+		if($this->view_mode == 'deletecity' && !empty($this->id)) {
+			//Действия при ручном обновлении
+			SQLExec("DELETE FROM rambler_weather_value WHERE CITY_ID = '".DBSafe($this->id)."'");
+			SQLExec("DELETE FROM rambler_weather_city WHERE ID = '".DBSafe($this->id)."'");
+			
 			$this->redirect('?');
 	    }
 		
 		
-		
 
 		$out['VERSION_MODULE'] = $this->version;
+	}
+	
+	function moonPhaseText($deg) {
+		$moon=array(
+			"1" => "Новолуние",
+			"2" => "Молодая луна",
+			"3" => "Правая четверть",
+			"4" => "Прибывающая луна",
+			"5" => "Полнолуние",
+			"6" => "Убывающая луна",
+			"7" => "Последняя четверть",
+			"8" => "Старая луна",
+		);
+		$i = ceil($deg/45);
+		if($i == 0) $i=1;
+		return $moon[$i];
+	}
+	
+	function getWindDirectionText($w_direction) {
+		if ($w_direction=='N') {$text = 'Северный';}
+		elseif ($w_direction=='NE') {$text = 'Северо-восточный';}     
+		elseif ($w_direction=='E') {$text = 'Восточный';}     
+		elseif ($w_direction=='SE') {$text = 'Юго-восточный';}     
+		elseif ($w_direction=='S') {$text = 'Южный';}     
+		elseif ($w_direction=='SW') {$text = 'Юго-западный';}     
+		elseif ($w_direction=='W') {$text = 'Западный';}     
+		elseif ($w_direction=='NW') {$text = 'Северо-западный';}    
+		return $text;
 	}
 	
 	function loadWeatherNow($url_path = '') {
@@ -168,6 +207,11 @@ class app_rambler extends module {
 		foreach($getAllCity as $key => $value) {
 			$data = $this->callAPI('https://weather.rambler.ru/api/v3/now/?only_current=1&url_path='.$value['URL_PATH']);
 			$data = json_decode($data, TRUE);
+			
+			//Добавим расчет фазы луны
+			$data["current_weather"]["moon_phase_text"] = $this->moonPhaseText($data["current_weather"]["moon_phase"]);
+			$data["current_weather"]["wind_direction_text"] = $this->getWindDirectionText($data["current_weather"]["wind_direction"]);
+			unset($data["current_weather"]["alert_text_short"]);
 			
 			foreach($data["current_weather"] as $weatherNowKey => $weatherNowValue) {
 				if(!is_array($weatherNowValue)) {
@@ -184,7 +228,6 @@ class app_rambler extends module {
 					if(!$ifExist) {
 						SQLInsert('rambler_weather_value', $rec);
 					} else {
-						debmes('UPDATE');
 						$rec['ID'] = $ifExist['ID'];
 						SQLUpdate('rambler_weather_value', $rec);
 					}
@@ -231,11 +274,22 @@ class app_rambler extends module {
 		}
 	}
 	
-	function install($data='') {	
+	function processSubscription($event, $details='') {
+		if ($event=='HOURLY') {
+			$this->getConfig();
+			$this->loadWeatherNow();
+		}
+	}
+	
+	function install($data='') {
+		subscribeToEvent($this->name, 'HOURLY');
+		
 		parent::install();
 	}
 	
 	function uninstall() {
+		unsubscribeFromEvent($this->name, 'HOURLY');
+		
 		$this->DeleteLinkedProperties();
 
 		// Удаляем таблицы модуля из БД.
