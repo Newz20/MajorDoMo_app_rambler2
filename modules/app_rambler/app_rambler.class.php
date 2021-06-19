@@ -457,7 +457,7 @@ class app_rambler extends module {
 	}
 	
 	function setPropByNewValue($object = '', $property = '', $method = '', $newvalue, $oldvalue, $city_id = '', $city_title = '') {
-		if(!empty($object) && !empty($property) && $newvalue != $oldvalue) {
+		if(!empty($object) && !empty($property) && ($newvalue != $oldvalue || $newvalue != gg($object.'.'.$property))) {
 			sg($object.'.'.$property, $newvalue);
 		}
 		if(!empty($object) && !empty($method) && $newvalue != $oldvalue) {
@@ -521,7 +521,10 @@ class app_rambler extends module {
 	}
 	
 	function processSubscription($event, $details='') {
-		if ($event=='MINUTELY' && date('m', time()) % 20 == 0) {
+		$date = date('m', time());
+		$date = (int) $date;
+		
+		if ($event=='MINUTELY' && $date % 20 == 0) {
 			$this->getConfig();
 			$this->loadDataCycle();
 		}
