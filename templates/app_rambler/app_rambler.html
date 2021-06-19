@@ -134,9 +134,9 @@ $(function() {
 						<td [#if CURRENT_WEATHER_TEMPERATURE#]style="background-image: url(/templates/app_rambler/assets/icons/fill/all/[#CURRENT_WEATHER_ICON#].svg);background-repeat: no-repeat;background-size: 40%;background-position: right center;"[#endif#]>[#CURRENT_WEATHER_TEMPERATURE#]</td>
 						<td class="text-right">
 							<div class="btn-group">
-								<a href="?view_mode=loaddata&id=[#ID#]" class="btn btn-default btn-xs">Данные</a>
+								<a href="?view_mode=loaddata&id=[#ID#]&mode=current_weather" class="btn btn-default btn-xs">Данные</a>
 								<a href="?view_mode=loadweather&id=[#URL_PATH#]" class="btn btn-warning btn-xs">Обновить</a>
-								<a href="?view_mode=deletecity&id=[#ID#]" class="btn btn-danger btn-xs">Удалить</a>
+								<a href="?view_mode=deletecity&id=[#ID#]" onclick="return confirm('Вы уверены? Пожалуйста, подтвердите операцию.')" class="btn btn-danger btn-xs">Удалить</a>
 							</div>
 						</td>
 						</tr>
@@ -150,61 +150,50 @@ $(function() {
 </div>
 [#endif#]
 [#if VIEW_MODE == "loaddata"#]
-<div class="row" style="margin-right: -15px;margin-left: -15px;">
-	<div class="col-md-12 text-right" style="margin-bottom: 15px;">
-		<a class="btn btn-default btn-success" href="?view_mode=addcity">Добавить новый город</a>
-	</div>
-	<div class="col-md-12" style="margin-bottom: 15px;">
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<h3 class="panel-title">Информация о городе</h3>
-			</div>
-			<div class="panel-body">
-				<div class="table-responsive">
-					<table class="table table-bordered">
-						<thead>
-							<tr>
-								<th>ID</th>
-								<th>URL Path</th>
-								<th>Город</th>
-								<th>Обновлен</th>
-								<th>Текущая</th>
-								<th></th>
-							</tr>
-						</thead>
-						<tbody>
-						[#begin CITY_INFO#]
-						<tr>
-						<td>[#ID#]</td>
-						<td>[#URL_PATH#]</td>
-						<td>[#TITLE#]</td>
-						<td>[#UPDATE#]</td>
-						<td [#if CURRENT_WEATHER_TEMPERATURE#]style="background-image: url(/templates/app_rambler/assets/icons/fill/all/[#CURRENT_WEATHER_ICON#].svg);background-repeat: no-repeat;background-size: 40%;background-position: right center;"[#endif#]>[#CURRENT_WEATHER_TEMPERATURE#]</td>
-						<td class="text-right">
-							<div class="btn-group">
-								<a href="?view_mode=loaddata&id=[#ID#]" class="btn btn-default btn-xs">Данные</a>
-								<a href="?view_mode=loadweather&id=[#URL_PATH#]" class="btn btn-warning btn-xs">Обновить</a>
-								<a class="btn btn-danger btn-xs">Удалить</a>
-							</div>
-						</td>
-						</tr>
-						[#end CITY_INFO#]
-						</tbody>
-						</table>
-				</div>
-			</div>
+	<script>
+	$(function() {
+		$('.breadcrumb:eq(0)').last().append('<li><a href="?view_mode=loaddata&id=[#ID#]&mode=current_weather">[#CITY_TITLE#]</a></li>');
+		
+		setTimeout(function(){
+			$('#loaderContent').hide();
+			
+			if($('table>tbody>tr').length == 0) {
+				$('#nodatafound').show();
+			} else {
+				$('.table-responsive').show();
+			}
+		}, 2000);
+	});
+	</script>
+	<div class="row" style="margin-right: -15px;margin-left: -15px;">
+		<div class="col-md-6" style="margin-bottom: 15px;">
+			<p style="font-size: 1.7rem;">[#CITY_TITLE#]</p>
+		</div>
+		<div class="col-md-6 text-right" style="margin-bottom: 15px;">
+			<a class="btn btn-default btn-success" href="?view_mode=addcity">Добавить новый город</a>
 		</div>
 	</div>
-</div>
-[#begin CITY_DATA#]
-<div class="row" style="margin-right: -15px;margin-left: -15px;">
-	<div class="col-md-12" style="margin-bottom: 15px;">
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<h3 class="panel-title">Выгрузка данных</h3>
+	<div class="row" style="margin-right: -15px;margin-left: -15px;">
+		<div class="col-md-12" style="margin-bottom: 15px;">
+			<div class="alert alert-info text-center">Обратите внимание! Первая выгрузка данных происходит после добавления города, далее раз в час будут обновляться только те данные, с которыми связано свойство или метод! Обновить все данные в ручную можно нажав кнопку "Обновить" на главной странице модуля.</div>
+		</div>
+		<div class="col-md-12" style="margin-bottom: 15px;">
+			<ul class="nav nav-pills" style="margin-bottom:15px;">
+				<li [#if MODE == "current_weather"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=current_weather">Текущая погода</a></li>
+				<li [#if MODE == "userip"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=userip">IP адрес</a></li>
+				<li [#if MODE == "currencies"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=currencies">Валюта</a></li>
+				<li [#if MODE == "goroskop"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=goroskop">Гороскоп</a></li>
+				<li [#if MODE == "traffic"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=traffic">Пробки</a></li>
+			</ul>
+			
+			<div id="loaderContent" style="text-align: center;margin: 15px;font-weight: bold;">
+				<img src="/templates/app_rambler/assets/img/loader.gif" style="width: 24px;"> Выгружаем информацию...
 			</div>
-			<div class="panel-body">
-				<div class="table-responsive">
+			
+			<div style="display:none;" id="nodatafound" class="alert alert-warning text-center">Нет данных по выбраной категории.</div>
+			
+			<div class="table-responsive" style="display:none;">
+				<form action="?" method="post" enctype="multipart/form-data" name="frmEdit">
 					<table class="table table-hover" style="border: 1px solid gainsboro;">
 						<thead>
 							<tr>
@@ -217,26 +206,33 @@ $(function() {
 							</tr>
 						</thead>
 						<tbody>
-						[#begin CURRENT_WEATHER#]
-							<tr>
-							<td>
-								[#TITLE#]
-								<p style="font-size: 1rem;color: gray;text-transform: lowercase;">[#CONTENT_TYPE#]</p>
-							</td>
-							<td>[#VALUE#]</td>
-							<td>[#UPDATE_HUMAN#]</td>
-							<td><input type="text" name="linked_object[#ID#]" id="linked_object[#ID#]" value="[#LINKED_OBJECT#]"></td>
-							<td><input type="text" name="linked_property[#ID#]" id="linked_property[#ID#]" value="[#LINKED_PROPERTY#]"></td>
-							<td><input type="text" name="linked_method[#ID#]" id="linked_method[#ID#]" value="[#LINKED_METHOD#]"></td>
-							[#module name="linkedobject" object_field="linked_object[#ID#]" property_field="linked_property[#ID#]" method_field="linked_method[#ID#]" width="100%"#]
-							</tr>
-						[#end CURRENT_WEATHER#]
+						[#begin CITY_DATA#]
+							[#begin DATA#]
+								<tr>
+								<td>
+									[#TITLE#]
+									<p style="font-size: 1rem;color: gray;text-transform: lowercase;">[#CONTENT_TYPE#]</p>
+								</td>
+								<td>[#VALUE#]</td>
+								<td>[#UPDATE_HUMAN#]</td>
+								<td><input type="text" name="linked_object[#ID#]" id="linked_object[#ID#]" value="[#LINKED_OBJECT#]"></td>
+								<td><input type="text" name="linked_property[#ID#]" id="linked_property[#ID#]" value="[#LINKED_PROPERTY#]"></td>
+								<td><input type="text" name="linked_method[#ID#]" id="linked_method[#ID#]" value="[#LINKED_METHOD#]"></td>
+								[#module name="linkedobject" object_field="linked_object[#ID#]" property_field="linked_property[#ID#]" method_field="linked_method[#ID#]" width="100%"#]
+								</tr>
+							[#end DATA#]
+						[#end CITY_DATA#]
 						</tbody>
-						</table>
-				</div>
+					</table>
+					<div class="col-md-12 text-center" style="padding: 0;">
+						<input type="hidden" name="view_mode" value="savelink">
+						<input type="hidden" name="id" value="[#ID#]">
+						<input type="hidden" name="mode" value="[#MODE#]">
+						<button type="submit" name="subm" value="Submit" class="btn btn-lg btn-success"><i class="las la-save"></i> Сохранить</button>
+					</div>
+					
+				</form>
 			</div>
 		</div>
 	</div>
-</div>
-[#end CITY_DATA#]
 [#endif#]
