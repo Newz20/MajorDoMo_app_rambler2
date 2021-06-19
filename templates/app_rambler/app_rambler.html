@@ -102,6 +102,17 @@ $(function() {
 [#endif#]
 
 [#if VIEW_MODE != "loaddata" AND VIEW_MODE != "addcity"#]
+<script>
+	$(function() {
+		if($('table>tbody>tr').length == 0) {
+			$('#nodatafound').show();
+			$('.table-responsive').hide();
+		} else {
+			$('.table-responsive').show();
+		}
+	});
+	</script>
+
 <div class="row" style="margin-right: -15px;margin-left: -15px;">
 	<div class="col-md-12 text-right" style="margin-bottom: 15px;">
 		<a class="btn btn-default btn-success" href="?view_mode=addcity">Добавить новый город</a>
@@ -112,6 +123,8 @@ $(function() {
 				<h3 class="panel-title">Получение погоды</h3>
 			</div>
 			<div class="panel-body">
+				<div style="display:none;" id="nodatafound" class="alert alert-warning text-center">Нет добавленых городов.</div>
+				
 				<div class="table-responsive">
 					<table class="table table-bordered">
 						<thead>
@@ -127,16 +140,16 @@ $(function() {
 						<tbody>
 						[#begin CITY_ALL#]
 						<tr>
-						<td>[#ID#]</td>
-						<td>[#URL_PATH#]</td>
-						<td>[#TITLE#]</td>
-						<td>[#UPDATE#]</td>
-						<td [#if CURRENT_WEATHER_TEMPERATURE#]style="background-image: url(/templates/app_rambler/assets/icons/fill/all/[#CURRENT_WEATHER_ICON#].svg);background-repeat: no-repeat;background-size: 40%;background-position: right center;"[#endif#]>[#CURRENT_WEATHER_TEMPERATURE#]</td>
-						<td class="text-right">
+						<td style="vertical-align: middle;">[#ID#]</td>
+						<td style="vertical-align: middle;">[#URL_PATH#]</td>
+						<td style="vertical-align: middle;">[#TITLE#]</td>
+						<td style="vertical-align: middle;">[#UPDATE#]</td>
+						<td style="vertical-align: middle;">[#if CURRENT_WEATHER_TEMPERATURE#]<img style="width: 4rem;display: initial;" src="/templates/app_rambler/assets/icons/fill/all/[#CURRENT_WEATHER_ICON#].svg"> [#endif#][#CURRENT_WEATHER_TEMPERATURE#]</td>
+						<td class="text-right" style="vertical-align: middle;">
 							<div class="btn-group">
-								<a href="?view_mode=loaddata&id=[#ID#]&mode=current_weather" class="btn btn-default btn-xs">Данные</a>
-								<a href="?view_mode=loadweather&id=[#URL_PATH#]" class="btn btn-warning btn-xs">Обновить</a>
-								<a href="?view_mode=deletecity&id=[#ID#]" onclick="return confirm('Вы уверены? Пожалуйста, подтвердите операцию.')" class="btn btn-danger btn-xs">Удалить</a>
+								<a href="?view_mode=loaddata&id=[#ID#]&mode=current_weather" class="btn btn-default">Данные</a>
+								<a href="?view_mode=loadweather&id=[#URL_PATH#]" class="btn btn-warning">Обновить</a>
+								<a href="?view_mode=deletecity&id=[#ID#]" onclick="return confirm('Вы уверены? Пожалуйста, подтвердите операцию.')" class="btn btn-danger">Удалить</a>
 							</div>
 						</td>
 						</tr>
