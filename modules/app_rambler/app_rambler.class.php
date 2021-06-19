@@ -310,10 +310,14 @@ class app_rambler extends module {
 		$rec['UPDATE'] = time();
 		
 		$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$rec['TITLE']."' AND CITY_ID = '".$rec['CITY_ID']."'");
+		
 		if(!$ifExist) {
 			SQLInsert('rambler_weather_value', $rec);
 		} else {
-			if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
+			//Обновляем свойства
+			$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $id);
+			
+			//if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) return;
 			
 			$rec['ID'] = $ifExist['ID'];
 			SQLUpdate('rambler_weather_value', $rec);
@@ -344,6 +348,9 @@ class app_rambler extends module {
 				if(!$ifExist) {
 					SQLInsert('rambler_weather_value', $rec);
 				} else {
+					//Обновляем свойства
+					$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+						
 					if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
 					
 					$rec['ID'] = $ifExist['ID'];
@@ -360,7 +367,6 @@ class app_rambler extends module {
 		
 		foreach($getUniqCityID as $value) {
 			$url_path = SQLSelectOne('SELECT URL_PATH FROM rambler_weather_city WHERE ID = "'.$value["CITY_ID"].'"');
-			//$value["CITY_ID"]
 			$this->loadWeatherNow($url_path['URL_PATH'], 1);
 		}
 	}
@@ -378,6 +384,9 @@ class app_rambler extends module {
 			if(!$ifExist) {
 				SQLInsert('rambler_weather_value', $rec);
 			} else {
+				//Обновляем свойства
+				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $id);
+				
 				if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
 				
 				$rec['ID'] = $ifExist['ID'];
@@ -424,8 +433,11 @@ class app_rambler extends module {
 					if(!$ifExist) {
 						SQLInsert('rambler_weather_value', $rec);
 					} else {
+						//Обновляем свойства
+						$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+						
 						if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
-							
+						
 						if($ifExist['GEO_CODE'] != $data["town"]["geo_id"]) {
 							//Обновим GEO ID он нам понадобится дальше
 							SQLExec("UPDATE rambler_weather_city SET GEO_CODE = '".$data["town"]["geo_id"]."' WHERE ID = '".$value['ID']."'");
@@ -441,6 +453,20 @@ class app_rambler extends module {
 			$this->loadCurrenciesNow($value['URL_PATH'], $cycleupdate);
 			//IP получим
 			$this->serverIP($value['ID'], $cycleupdate);
+		}
+	}
+	
+	function setPropByNewValue($object = '', $property = '', $method = '', $newvalue, $oldvalue, $city_id = '', $city_title = '') {
+		if(!empty($object) && !empty($property) && $newvalue != $oldvalue) {
+			sg($object.'.'.$property, $newvalue);
+		}
+		if(!empty($object) && !empty($method) && $newvalue != $oldvalue) {
+			cm($object.'.'.$method, array(
+				'NEW_VALUE' => $newvalue,
+				'OLD_VALUE' => $oldvalue,
+				'CITY_ID' => $city_id,
+				'CITY_NAME' => $city_title,
+			));
 		}
 	}
 	
@@ -495,14 +521,14 @@ class app_rambler extends module {
 	}
 	
 	function processSubscription($event, $details='') {
-		if ($event=='HOURLY') {
+		if ($event=='MINUTELY' && date('m', time()) % 20 == 0) {
 			$this->getConfig();
-			$this->loadWeatherNow();
+			$this->loadDataCycle();
 		}
 	}
 	
 	function install($data='') {
-		subscribeToEvent($this->name, 'HOURLY');
+		subscribeToEvent($this->name, 'MINUTELY');
 		
 		parent::install();
 	}
