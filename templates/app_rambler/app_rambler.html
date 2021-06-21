@@ -193,6 +193,7 @@ $(function() {
 		<div class="col-md-12" style="margin-bottom: 15px;">
 			<ul class="nav nav-pills" style="margin-bottom:15px;">
 				<li [#if MODE == "current_weather"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=current_weather">Текущая погода</a></li>
+				<li [#if MODE == "inday_weather"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=inday_weather">Погода на день</a></li>
 				<li [#if MODE == "userip"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=userip">IP адрес</a></li>
 				<li [#if MODE == "currencies"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=currencies">Валюта</a></li>
 				<li [#if MODE == "goroskop"#]class="active"[#endif#]><a href="?view_mode=[#VIEW_MODE#]&id=[#ID#]&mode=goroskop">Гороскоп</a></li>
