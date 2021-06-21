@@ -395,6 +395,43 @@ class app_rambler extends module {
 		}
 	}
 	
+	function inday_weather($data, $id, $cycleupdate = 0) {
+		if(empty($data)) return;
+
+		$arrayKeyInDay = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00', '24:00'];
+		
+		foreach($data['table_data'] as $key => $value) {
+			unset($value['date']);
+			foreach($value as $key2 => $value2) {
+				foreach($value2 as $key3 => $value3) {
+					$rec['TITLE'] = 'inday_weather.'.$key2.'_'.$arrayKeyInDay[$key3];
+					$rec['VALUE'] = $value3;
+					$rec['CITY_ID'] = $id;
+					$rec['UPDATE'] = time();
+					
+					if(($key2 == 'temperature' || $key2 == 'temp_feels' || $key2 == 'temp_water' ) && $rec['VALUE'] > 0) {
+						$rec['VALUE'] = '+'.$rec['VALUE'];
+					}
+					
+					$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$rec['TITLE']."' AND CITY_ID = '".$rec['CITY_ID']."'");
+					if(!$ifExist) {
+						SQLInsert('rambler_weather_value', $rec);
+					} else {
+						//Обновляем свойства
+						$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $id);
+						
+						if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
+						
+						$rec['ID'] = $ifExist['ID'];
+						SQLUpdate('rambler_weather_value', $rec);
+					}
+					
+				}
+			}
+		}
+	}
+	
+	
 	function loadWeatherNow($url_path = '', $cycleupdate = 0) {
 		if($url_path != '') {
 			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($url_path)."'");
@@ -403,28 +440,31 @@ class app_rambler extends module {
 		}
 		
 		foreach($getAllCity as $key => $value) {
-			$data = $this->callAPI('https://weather.rambler.ru/api/v3/now/?url_path='.$value['URL_PATH']);
+			$data = $this->callAPI('https://weather.rambler.ru/api/v3/today/?all_data=0&url_path='.$value['URL_PATH']);
 			$data = json_decode($data, TRUE);
 			
 			//Добавим расчет фазы луны
-			$data["current_weather"]["moon_phase_text"] = $this->moonPhaseText($data["current_weather"]["moon_phase"]);
-			$data["current_weather"]["wind_direction_text"] = $this->getWindDirectionText($data["current_weather"]["wind_direction"]);
-			$data["current_weather"]["geomagnetic_text"] = $this->magneticText($data["current_weather"]["geomagnetic"]);
-			$data["current_weather"]["precipitation_probability_text"] = $this->uvText($data["current_weather"]["precipitation_probability"]);
-			$data["current_weather"]["icon_text"] = $this->iconText($data["current_weather"]["icon"]);
-			$data["current_weather"]["roadway_visibility_points"] = $data["current_weather"]["roadway_visibility"]["points"];
-			$data["current_weather"]["roadway_visibility_description"] = $data["current_weather"]["roadway_visibility"]["description"];
+			$data["date_weather"]["moon_phase_text"] = $this->moonPhaseText($data["date_weather"]["moon_phase"]);
+			$data["date_weather"]["wind_direction_text"] = $this->getWindDirectionText($data["date_weather"]["wind_direction"]);
+			$data["date_weather"]["geomagnetic_text"] = $this->magneticText($data["date_weather"]["geomagnetic"]);
+			$data["date_weather"]["precipitation_probability_text"] = $this->uvText($data["date_weather"]["precipitation_probability"]);
+			$data["date_weather"]["icon_text"] = $this->iconText($data["date_weather"]["icon"]);
+			$data["date_weather"]["roadway_visibility_points"] = $data["date_weather"]["roadway_visibility"]["points"];
+			$data["date_weather"]["roadway_visibility_description"] = $data["date_weather"]["roadway_visibility"]["description"];
+			$data["date_weather"]["sunset"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunset"]));
+			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
 			
-			unset($data["current_weather"]["alert_text_short"]);
+			unset($data["date_weather"]["alert_text_short"]);
+			unset($data["date_weather"]["date"]);
 			
-			foreach($data["current_weather"] as $weatherNowKey => $weatherNowValue) {
+			foreach($data["date_weather"] as $weatherNowKey => $weatherNowValue) {
 				if(!is_array($weatherNowValue)) {
 					$rec['TITLE'] = 'current_weather.'.$weatherNowKey;
 					$rec['VALUE'] = $weatherNowValue;
 					$rec['CITY_ID'] = $value['ID'];
 					$rec['UPDATE'] = time();
 					
-					if(($weatherNowKey == 'temperature' || $weatherNowKey == 'temp_feels') && $weatherNowValue > 0) {
+					if(($weatherNowKey == 'temperature' || $weatherNowKey == 'temp_feels' || $weatherNowKey == 'temp_water' ) && $weatherNowValue > 0) {
 						$rec['VALUE'] = '+'.$weatherNowValue;
 					}
 					
@@ -453,6 +493,8 @@ class app_rambler extends module {
 			$this->loadCurrenciesNow($value['URL_PATH'], $cycleupdate);
 			//IP получим
 			$this->serverIP($value['ID'], $cycleupdate);
+			//Получим прогноз на день
+			$this->inday_weather($data, $value['ID'], $cycleupdate);
 		}
 	}
 	
@@ -521,11 +563,9 @@ class app_rambler extends module {
 	}
 	
 	function processSubscription($event, $details='') {
-		$date = date('m', time());
-		$date = (int) $date;
+		$date = date('i', time());
 		
-		if ($event=='MINUTELY' && $date % 20 == 0) {
-			$this->getConfig();
+		if ($event=='MINUTELY' && ($date == '00' || $date == '20' || $date == '40')) {
 			$this->loadDataCycle();
 		}
 	}
