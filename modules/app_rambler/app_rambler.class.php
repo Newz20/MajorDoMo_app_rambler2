@@ -535,12 +535,15 @@ class app_rambler extends module {
 		
 		curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
 		curl_setopt($ch, CURLOPT_VERBOSE, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 		curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 		$html = curl_exec($ch);
 		curl_close($ch);
 		 
 		return $html;
 	}
+
 
 	function whereiam() {
 		$data = $this->callAPI('https://weather.rambler.ru/location/autodetect');
