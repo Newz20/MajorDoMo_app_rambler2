@@ -118,10 +118,12 @@ class app_rambler extends module {
 			$this->redirect('?');
 	    }
 	
-		if($this->view_mode == 'loaddata' && !empty($this->id) && !empty($this->mode)) {
+		if($this->view_mode == 'loaddata' && !empty($this->id)) {
+			if(empty($this->mode)) $this->mode = 'current_weather';
 			//Действия при входе в город, тут выгружаем все значения
 			$city_info = SQLSelectOne('SELECT * FROM rambler_weather_city WHERE id = '.DBSafe($this->id).' ORDER BY ID');
 			$out['CITY_TITLE'] = $city_info['TITLE'];
+			$out['CITY_URL_PATH'] = $city_info['URL_PATH'];
 			$arrayInDB = SQLSelect('SELECT * FROM rambler_weather_value WHERE CITY_ID = '.DBSafe($this->id).' ORDER BY ID');
 			$arrayReady = [];
 			$arrayOut = [];
@@ -209,6 +211,11 @@ class app_rambler extends module {
 			SQLExec("DELETE FROM rambler_weather_city WHERE ID = '".DBSafe($this->id)."'");
 			
 			$this->redirect('?');
+	    }
+		
+		if($this->view_mode == 'autolink' && !empty($this->id) && !empty($this->mode) && !empty($this->tab)) {
+			$this->autoLinkProp($this->mode, $this->id, $this->tab);
+			$this->redirect('?view_mode=loaddata&id='.$this->id);
 	    }
 
 		$out['VERSION_MODULE'] = $this->version;
@@ -298,6 +305,26 @@ class app_rambler extends module {
 		);
 
 		return $icon[$text];
+	}
+	
+	function autoLinkProp($url_path, $city_id, $type) {
+		addClass('app_rambler');
+		addClassObject('app_rambler', $url_path);
+		
+		$loadAllProp = SQLSelect("SELECT * FROM rambler_weather_value WHERE CITY_ID = '".$city_id."' AND TITLE LIKE '".$type.".%' AND LINKED_OBJECT = '' AND LINKED_PROPERTY = ''");
+		
+		$obj = getObject($url_path);
+
+		foreach($loadAllProp as $key => $value) {
+			if(empty($value['TITLE'])) continue;
+			
+			$exValue = explode('.', $value['TITLE']);
+			$obj->setProperty($exValue[1], $value['VALUE']);
+			
+			addLinkedProperty($url_path, $exValue[1], $this->name);
+			
+			SQLExec("UPDATE rambler_weather_value SET LINKED_OBJECT = '".$url_path."', LINKED_PROPERTY = '".$exValue[1]."' WHERE CITY_ID = '".$city_id."' AND TITLE = '".$value['TITLE']."'");		
+		}
 	}
 	
 	function serverIP($id, $cycleupdate = 0) {
@@ -520,6 +547,59 @@ class app_rambler extends module {
 			echo $this->whereiam();
 			die();
     	}
+		global $url_path;
+
+		if(isset($url_path)) {
+			$city = SQLSelectOne('SELECT * FROM rambler_weather_city WHERE URL_PATH = "'.DBSafe($url_path).'"');
+			$data = SQLSelectOne('SELECT * FROM rambler_weather_value WHERE CITY_ID = "'.DBSafe($city['ID']).'" AND LINKED_OBJECT != "" AND LINKED_PROPERTY != ""');
+			
+			foreach($city as $key => $value) {
+				$city['CITY_'.$key] = $value;
+				unset($city[$key]);
+			}
+			
+			$count = 0;
+			
+			foreach($data as $key => $value) {
+				if($key == 'TITLE' && $value == 'current_weather.temperature') {
+					$city['DATA_TEMP'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.roadway_visibility_description') {
+					$city['DATA_READDESC'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.icon') {
+					$city['DATA_ICON'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.icon_text') {
+					$city['DATA_ICON_TEXT'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.temp_feels') {
+					$city['DATA_TEMP_FEELS'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.wind_direction_text') {
+					$city['DATA_WIND_DER'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.wind_speed') {
+					$city['DATA_WIND'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.uv') {
+					$city['DATA_UV'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.pressure_mm') {
+					$city['DATA_PRESS'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.moon_phase_text') {
+					$city['DATA_MOON_PH'] = $data['VALUE'];
+					$count++;
+				} else if($key == 'TITLE' && $value == 'current_weather.geomagnetic_text') {
+					$city['DATA_GEOMAG'] = $data['VALUE'];
+					$count++;
+				}
+			}
+			
+			echo '<pre>';
+			var_dump($city);
+		}
 	}
 	
 	function callAPI($url, $geocode = 0) {
