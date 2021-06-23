@@ -238,13 +238,15 @@ $(function() {
 						[#end CITY_DATA#]
 						</tbody>
 					</table>
+					
 					<div class="col-md-12 text-center" style="padding: 0;">
 						<input type="hidden" name="view_mode" value="savelink">
 						<input type="hidden" name="id" value="[#ID#]">
 						<input type="hidden" name="mode" value="[#MODE#]">
+						<a class="btn btn-lg btn-primary" style="margin-right: 5px;" href="?view_mode=autolink&id=<#ID#>&mode=<#CITY_URL_PATH#>&tab=<#MODE#>">Привязать все свойства</a>
+						
 						<button type="submit" name="subm" value="Submit" class="btn btn-lg btn-success"><i class="las la-save"></i> Сохранить</button>
 					</div>
-					
 				</form>
 			</div>
 		</div>
