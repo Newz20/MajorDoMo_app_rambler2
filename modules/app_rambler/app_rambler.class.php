@@ -237,6 +237,21 @@ class app_rambler extends module {
 		return $moon[$i];
 	}
 	
+	function getWindDirectionText($text){
+		$wind=array(
+		  "N" => "Северный",
+		  "NE" => "Северо-восточный",
+		  "E" => "Восточный",
+		  "SE" => "Юго-восточный",
+		  "S" => "Южный",
+		  "SW" => "Юго-западный",
+		  "W" => "Западный",
+		  "NW" => "Северо-западный",
+		);
+	
+		return $wind[$text];
+	  }
+	/* оптимизация
 	function getWindDirectionText($w_direction) {
 		if ($w_direction=='N') {$text = 'Северный';}
 		elseif ($w_direction=='NE') {$text = 'Северо-восточный';}     
@@ -247,7 +262,7 @@ class app_rambler extends module {
 		elseif ($w_direction=='W') {$text = 'Западный';}     
 		elseif ($w_direction=='NW') {$text = 'Северо-западный';}    
 		return $text;
-	}
+	}*/
 	
 	function magneticText($num) {
 		$magnetic = array(
