@@ -491,7 +491,7 @@ class app_rambler extends module {
 			$data["date_weather"]["moon_phase_text"] = $this->moonPhaseText($data["date_weather"]["moon_phase"]);
 			$data["date_weather"]["wind_direction_text"] = $this->getWindDirectionText($data["date_weather"]["wind_direction"]);
 			$data["date_weather"]["geomagnetic_text"] = $this->magneticText($data["date_weather"]["geomagnetic"]);
-			$data["date_weather"]["precipitation_probability_text"] = $this->uvText($data["date_weather"]["precipitation_probability"]);
+			$data["date_weather"]["uv_text"] = $this->uvText($data["date_weather"]["uv"]);
 			$data["date_weather"]["icon_text"] = $this->iconText($data["date_weather"]["icon"]);
 			$data["date_weather"]["roadway_visibility_points"] = $data["date_weather"]["roadway_visibility"]["points"];
 			$data["date_weather"]["roadway_visibility_description"] = $data["date_weather"]["roadway_visibility"]["description"];
@@ -564,10 +564,37 @@ class app_rambler extends module {
 					foreach($value as $name => $val) {
                         if (!is_array($val)) {
 							
-						
+						/*
 						if($name == 'date') {
 						$val = date("d.m.Y", strtotime($val));
 						}	
+						*/
+						
+						switch ($name) { 
+							case 'date': 
+									// Команды
+									$val = date("d.m.Y", strtotime($val));
+									break;     //выход чтобы дальше не искал, если нашел и выполнил 
+							case 'sunset': 
+									$val = date('d.m.Y H:i:s', strtotime($val));
+									break; 
+							case 'sunrise':
+									$val = date('d.m.Y H:i:s', strtotime($val));
+									break;
+							case 'uv':
+									$val = $this->uvText($val);
+									break;
+							case 'daylight':
+									$val = date_format(new DateTime("@$val"),'H:i');
+   									break;
+							case 'moon_phase':
+									$val = $this->moonPhaseText($val);
+									break;			
+							case 'geomagnetic':
+									$val = $this->magneticText($val);
+									break;		
+																
+						}
 						
 						
 							
@@ -577,9 +604,27 @@ class app_rambler extends module {
                             foreach ($value['forecast'] as $partOfDay => $value2) {
                                 foreach ($value2 as $valuename => $itogValue) {
 									
-									if($valuename == 'temperature' && $itogValue > 0) {
+									/*if($valuename == 'temperature' && $itogValue > 0) {
 									$itogValue = '+'.$itogValue;
-									}	
+									}	*/
+									
+									
+									switch ($valuename) { 
+										case 'temperature': 
+												// Команды
+												if($itogValue > 0) {
+												$itogValue = '+'.$itogValue;
+												}				
+												break;     //выход чтобы дальше не искал, если нашел и выполнил 
+										case 'wind_direction': 
+												$itogValue = $this->getWindDirectionText($itogValue);
+												break; 
+										case 'icon':
+												$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename.'_text', 'VALUE' => $this->iconText($itogValue), 'CITY_ID' => $id, 'UPDATE' => time());
+												break;
+												
+									}
+									
 									
 									
                                     $arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename, 'VALUE' => $itogValue, 'CITY_ID' => $id, 'UPDATE' => time());
@@ -606,26 +651,7 @@ class app_rambler extends module {
 			}
 				
 			
-
-
-
-
-
-
-			/*
-			//Добавим расчет фазы луны
-			$data["date_weather"]["moon_phase_text"] = $this->moonPhaseText($data["date_weather"]["moon_phase"]);
-			$data["date_weather"]["wind_direction_text"] = $this->getWindDirectionText($data["date_weather"]["wind_direction"]);
-			$data["date_weather"]["geomagnetic_text"] = $this->magneticText($data["date_weather"]["geomagnetic"]);
-			$data["date_weather"]["precipitation_probability_text"] = $this->uvText($data["date_weather"]["precipitation_probability"]);
-			$data["date_weather"]["icon_text"] = $this->iconText($data["date_weather"]["icon"]);
-			$data["date_weather"]["roadway_visibility_points"] = $data["date_weather"]["roadway_visibility"]["points"];
-			$data["date_weather"]["roadway_visibility_description"] = $data["date_weather"]["roadway_visibility"]["description"];
-			$data["date_weather"]["sunset"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunset"]));
-			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
-			*/
-			
-			
+				
 			
 			
 		}
