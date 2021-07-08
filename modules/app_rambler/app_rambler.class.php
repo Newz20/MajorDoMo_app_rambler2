@@ -379,6 +379,8 @@ class app_rambler extends module {
 			
 			//Отправим в функцию для получения пробок
 			$this->loadTraffic($data["traffic"], $value['ID']);
+
+
 			
 			foreach($data["currencies"] as $keycurrencies => $valuecurrencies) {
 				$rec['TITLE'] = 'currencies.'.$valuecurrencies['code'];
@@ -537,9 +539,104 @@ class app_rambler extends module {
 			$this->serverIP($value['ID'], $cycleupdate);
 			//Получим прогноз на день
 			$this->inday_weather($data, $value['ID'], $cycleupdate);
+			//Получим прогноз на 10 дней
+			$this->loadWeatherforecast10($value['URL_PATH'], $cycleupdate);
 		}
 	}
 	
+	function loadWeatherforecast10($url_path = '', $cycleupdate = 0) {
+		if($url_path != '') {
+			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city WHERE URL_PATH = '".DBSafe($url_path)."'");
+		} else {
+			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city");
+		}
+		
+		
+		
+		foreach($getAllCity as $keyy => $valuee) {
+			$data = $this->callAPI('https://weather.rambler.ru/api/v3/ndays/?n=10&url_path='.$valuee['URL_PATH']);
+			$data = json_decode($data, TRUE);
+			$id=$valuee['ID'];
+			
+			$arr=array();
+			
+				foreach ($data['range_weather'] as $key => $value) {
+					foreach($value as $name => $val) {
+                        if (!is_array($val)) {
+							
+						
+						if($name == 'date') {
+						$val = date("d.m.Y", strtotime($val));
+						}	
+						
+						
+							
+						$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$name, 'VALUE' => $val, 'CITY_ID' => $id, 'UPDATE' => time());
+						}
+                        else {
+                            foreach ($value['forecast'] as $partOfDay => $value2) {
+                                foreach ($value2 as $valuename => $itogValue) {
+									
+									if($valuename == 'temperature' && $itogValue > 0) {
+									$itogValue = '+'.$itogValue;
+									}	
+									
+									
+                                    $arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename, 'VALUE' => $itogValue, 'CITY_ID' => $id, 'UPDATE' => time());
+                                }
+                            }
+                        }
+					}
+					
+				}
+					
+			foreach ($arr as $key => $value)	{
+			$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$value['TITLE']."' AND CITY_ID = '".$value['CITY_ID']."'");
+					
+			if(!is_array ($ifExist)) {
+				SQLInsert('rambler_weather_value', $value);
+				
+			} else {
+				//Обновляем свойства
+				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $value['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+				$value['ID'] = $ifExist['ID'];		
+				if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
+				SQLUpdate('rambler_weather_value', $value);
+				}
+			}
+				
+			
+
+
+
+
+
+
+			/*
+			//Добавим расчет фазы луны
+			$data["date_weather"]["moon_phase_text"] = $this->moonPhaseText($data["date_weather"]["moon_phase"]);
+			$data["date_weather"]["wind_direction_text"] = $this->getWindDirectionText($data["date_weather"]["wind_direction"]);
+			$data["date_weather"]["geomagnetic_text"] = $this->magneticText($data["date_weather"]["geomagnetic"]);
+			$data["date_weather"]["precipitation_probability_text"] = $this->uvText($data["date_weather"]["precipitation_probability"]);
+			$data["date_weather"]["icon_text"] = $this->iconText($data["date_weather"]["icon"]);
+			$data["date_weather"]["roadway_visibility_points"] = $data["date_weather"]["roadway_visibility"]["points"];
+			$data["date_weather"]["roadway_visibility_description"] = $data["date_weather"]["roadway_visibility"]["description"];
+			$data["date_weather"]["sunset"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunset"]));
+			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
+			*/
+			
+			
+			
+			
+		}
+	}
+
+	
+
+
+
+
+
 	function setPropByNewValue($object = '', $property = '', $method = '', $newvalue, $oldvalue, $city_id = '', $city_title = '') {
 		if(!empty($object) && !empty($property) && ($newvalue != $oldvalue || $newvalue != gg($object.'.'.$property))) {
 			sg($object.'.'.$property, $newvalue);
