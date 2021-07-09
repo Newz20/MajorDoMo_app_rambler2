@@ -251,10 +251,7 @@ class app_rambler extends module {
 	
 		return $wind[$text];
 	  }
-	/* оптимизация
-	function getWindDirectionText($w_direction) {
-	
-	
+		
 	function magneticText($num) {
 		$magnetic = array(
 			"0" => "Спокойное магнитное поле",
