@@ -498,6 +498,7 @@ class app_rambler extends module {
 			$data["date_weather"]["sunset"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunset"]));
 			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
 			
+			
 			unset($data["date_weather"]["alert_text_short"]);
 			unset($data["date_weather"]["date"]);
 			
@@ -541,6 +542,8 @@ class app_rambler extends module {
 			$this->inday_weather($data, $value['ID'], $cycleupdate);
 			//Получим прогноз на 10 дней
 			$this->loadWeatherforecast10($value['URL_PATH'], $cycleupdate);
+			//Получим гороскоп
+			$this->goroskop($value['ID'], $cycleupdate);
 		}
 	}
 	
@@ -551,89 +554,72 @@ class app_rambler extends module {
 			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city");
 		}
 		
-		
-		
 		foreach($getAllCity as $keyy => $valuee) {
 			$data = $this->callAPI('https://weather.rambler.ru/api/v3/ndays/?n=10&url_path='.$valuee['URL_PATH']);
 			$data = json_decode($data, TRUE);
 			$id=$valuee['ID'];
 			
 			$arr=array();
-			
-				foreach ($data['range_weather'] as $key => $value) {
-					foreach($value as $name => $val) {
-                        if (!is_array($val)) {
-							
-						/*
-						if($name == 'date') {
-						$val = date("d.m.Y", strtotime($val));
-						}	
-						*/
+		
+			foreach ($data['range_weather'] as $key => $value) {
+				foreach($value as $name => $val) {
+					if (!is_array($val)) {
 						
 						switch ($name) { 
-							case 'date': 
-									// Команды
-									$val = date("d.m.Y", strtotime($val));
-									break;     //выход чтобы дальше не искал, если нашел и выполнил 
-							case 'sunset': 
-									$val = date('d.m.Y H:i:s', strtotime($val));
-									break; 
-							case 'sunrise':
-									$val = date('d.m.Y H:i:s', strtotime($val));
-									break;
-							case 'uv':
-									$val = $this->uvText($val);
-									break;
-							case 'daylight':
-									$val = date_format(new DateTime("@$val"),'H:i');
-   									break;
-							case 'moon_phase':
-									$val = $this->moonPhaseText($val);
-									break;			
-							case 'geomagnetic':
-									$val = $this->magneticText($val);
-									break;		
-																
+						case 'date': 
+								// Команды
+								$val = date("d.m.Y", strtotime($val));
+								break;     //выход чтобы дальше не искал, если нашел и выполнил 
+						case 'sunset': 
+								$val = date('d.m.Y H:i:s', strtotime($val));
+								break; 
+						case 'sunrise':
+								$val = date('d.m.Y H:i:s', strtotime($val));
+								break;
+						case 'uv':
+								$val = $this->uvText($val);
+								break;
+						case 'daylight':
+								$val = date_format(new DateTime("@$val"),'H:i');
+								break;
+						case 'moon_phase':
+								$val = $this->moonPhaseText($val);
+								break;			
+						case 'geomagnetic':
+								$val = $this->magneticText($val);
+								break;		
+															
 						}
 						
-						
-							
-						$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$name, 'VALUE' => $val, 'CITY_ID' => $id, 'UPDATE' => time());
-						}
-                        else {
-                            foreach ($value['forecast'] as $partOfDay => $value2) {
-                                foreach ($value2 as $valuename => $itogValue) {
-									
-									/*if($valuename == 'temperature' && $itogValue > 0) {
-									$itogValue = '+'.$itogValue;
-									}	*/
-									
-									
-									switch ($valuename) { 
-										case 'temperature': 
-												// Команды
-												if($itogValue > 0) {
-												$itogValue = '+'.$itogValue;
-												}				
-												break;     //выход чтобы дальше не искал, если нашел и выполнил 
-										case 'wind_direction': 
-												$itogValue = $this->getWindDirectionText($itogValue);
-												break; 
-										case 'icon':
-												$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename.'_text', 'VALUE' => $this->iconText($itogValue), 'CITY_ID' => $id, 'UPDATE' => time());
-												break;
-												
-									}
-									
-									
-									
-                                    $arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename, 'VALUE' => $itogValue, 'CITY_ID' => $id, 'UPDATE' => time());
-                                }
-                            }
-                        }
+					$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$name, 'VALUE' => $val, 'CITY_ID' => $id, 'UPDATE' => time());
 					}
-					
+					else {
+						foreach ($value['forecast'] as $partOfDay => $value2) {
+							foreach ($value2 as $valuename => $itogValue) {
+							
+								switch ($valuename) { 
+									case 'temperature': 
+											// Команды
+											if($itogValue > 0) {
+											$itogValue = '+'.$itogValue;
+											}				
+											break;     //выход чтобы дальше не искал, если нашел и выполнил 
+									case 'wind_direction': 
+											$itogValue = $this->getWindDirectionText($itogValue);
+											break; 
+									case 'icon':
+											$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename.'_text', 'VALUE' => $this->iconText($itogValue), 'CITY_ID' => $id, 'UPDATE' => time());
+											break;
+											
+								}
+								
+								$arr[] = array('TITLE' => 'forecast.'.$key.'_'.$partOfDay.'_'.$valuename, 'VALUE' => $itogValue, 'CITY_ID' => $id, 'UPDATE' => time());
+							}
+						}
+					}
 				}
+				
+			}
 					
 			foreach ($arr as $key => $value)	{
 			$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$value['TITLE']."' AND CITY_ID = '".$value['CITY_ID']."'");
@@ -649,19 +635,62 @@ class app_rambler extends module {
 				SQLUpdate('rambler_weather_value', $value);
 				}
 			}
-				
-			
-				
-			
-			
 		}
 	}
 
+
+	function goroskop($id, $cycleupdate = 0) {
+			
+		$horo=array(
+		  "aries" => "Овен",
+		  "taurus" => "Телец",
+		  "gemini" => "Близнецы",
+		  "cancer" => "Рак",
+		  "leo" => "Лев",
+		  "virgo" => "Дева",
+		  "libra" => "Весы",
+		  "scorpio" => "Скорпион",
+		  "sagittarius" => "Стрелец",
+		  "capricorn" => "Козерог",
+		  "aquarius" => "Водолей",
+		  "pisces" => "Рыбы",);
 	
-
-
-
-
+	
+		$arr=array();
+		foreach($horo as $znak => $znak_rus) {
+			$data = $this->callAPI('https://horoscopes.rambler.ru/api/front/v3/horoscope/general/'.$znak.'/tomorrow/');
+			$data = json_decode($data, TRUE);
+			
+			foreach ($data['content']['text'] as $key => $value) {
+				$arr[] = array('TITLE' => 'goroskop.'.$znak.'_tomorrow', 'VALUE' => $value["content"], 'CITY_ID' => $id, 'UPDATE' => time());
+			}
+		}
+		foreach($horo as $znak => $znak_rus) {
+			$data = $this->callAPI('https://horoscopes.rambler.ru/api/front/v3/horoscope/general/'.$znak.'/today/');
+			$data = json_decode($data, TRUE);
+			
+			foreach ($data['content']['text'] as $key => $value) {
+				$arr[] = array('TITLE' => 'goroskop.'.$znak.'_today', 'VALUE' => $value["content"], 'CITY_ID' => $id, 'UPDATE' => time());
+			}
+		}
+		foreach ($arr as $key => $value)	{
+			$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$value['TITLE']."' AND CITY_ID = '".$value['CITY_ID']."'");
+					
+			if(!$ifExist) {
+				SQLInsert('rambler_weather_value', $value);
+				
+			} else {
+				//Обновляем свойства
+				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $value['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+				$value['ID'] = $ifExist['ID'];		
+				if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
+				SQLUpdate('rambler_weather_value', $value);
+			}
+		}
+				
+			
+	}
+	
 
 	function setPropByNewValue($object = '', $property = '', $method = '', $newvalue, $oldvalue, $city_id = '', $city_title = '') {
 		if(!empty($object) && !empty($property) && ($newvalue != $oldvalue || $newvalue != gg($object.'.'.$property))) {
