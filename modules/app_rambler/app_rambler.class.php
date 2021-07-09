@@ -253,16 +253,7 @@ class app_rambler extends module {
 	  }
 	/* оптимизация
 	function getWindDirectionText($w_direction) {
-		if ($w_direction=='N') {$text = 'Северный';}
-		elseif ($w_direction=='NE') {$text = 'Северо-восточный';}     
-		elseif ($w_direction=='E') {$text = 'Восточный';}     
-		elseif ($w_direction=='SE') {$text = 'Юго-восточный';}     
-		elseif ($w_direction=='S') {$text = 'Южный';}     
-		elseif ($w_direction=='SW') {$text = 'Юго-западный';}     
-		elseif ($w_direction=='W') {$text = 'Западный';}     
-		elseif ($w_direction=='NW') {$text = 'Северо-западный';}    
-		return $text;
-	}*/
+	
 	
 	function magneticText($num) {
 		$magnetic = array(
@@ -497,6 +488,8 @@ class app_rambler extends module {
 			$data["date_weather"]["roadway_visibility_description"] = $data["date_weather"]["roadway_visibility"]["description"];
 			$data["date_weather"]["sunset"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunset"]));
 			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
+			$daylightsec = $data['date_weather']['daylight'];
+			$data["date_weather"]["daylight_H_i"] = date_format(new DateTime("@$daylightsec"),'H:i');
 			
 			
 			unset($data["date_weather"]["alert_text_short"]);
