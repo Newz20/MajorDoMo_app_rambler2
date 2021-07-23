@@ -311,12 +311,13 @@ class app_rambler extends module {
 	}
 	
 	function autoLinkProp($url_path, $city_id, $type) {
+		$url_path_obj = substr($url_path, 2);
 		addClass('app_rambler');
-		addClassObject('app_rambler', $url_path);
+		addClassObject('app_rambler', $url_path_obj);
 		
 		$loadAllProp = SQLSelect("SELECT * FROM rambler_weather_value WHERE CITY_ID = '".$city_id."' AND TITLE LIKE '".$type.".%' AND LINKED_OBJECT = '' AND LINKED_PROPERTY = ''");
 		
-		$obj = getObject($url_path);
+		$obj = getObject($url_path_obj);
 
 		foreach($loadAllProp as $key => $value) {
 			if(empty($value['TITLE'])) continue;
@@ -324,9 +325,10 @@ class app_rambler extends module {
 			$exValue = explode('.', $value['TITLE']);
 			$obj->setProperty($exValue[1], $value['VALUE']);
 			
-			addLinkedProperty($url_path, $exValue[1], $this->name);
+			addLinkedProperty($url_path_obj, $exValue[1], $this->name);
 			
-			SQLExec("UPDATE rambler_weather_value SET LINKED_OBJECT = '".$url_path."', LINKED_PROPERTY = '".$exValue[1]."' WHERE CITY_ID = '".$city_id."' AND TITLE = '".$value['TITLE']."'");		
+			SQLExec("UPDATE rambler_weather_value SET LINKED_OBJECT = '".$url_path_obj."', LINKED_PROPERTY = '".$exValue[1]."' WHERE CITY_ID = '".$city_id."' AND TITLE = '".$value['TITLE']."'");		
+		
 		}
 	}
 	
