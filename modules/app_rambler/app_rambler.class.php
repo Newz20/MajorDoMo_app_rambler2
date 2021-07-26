@@ -432,7 +432,7 @@ class app_rambler extends module {
 	function inday_weather($data, $id, $cycleupdate = 0) {
 		if(empty($data)) return;
 
-		$arrayKeyInDay = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00', '24:00'];
+		$arrayKeyInDay = ['00_00', '03_00', '06_00', '09_00', '12_00', '15_00', '18_00', '21_00', '24_00'];
 		
 		foreach($data['table_data'] as $key => $value) {
 			unset($value['date']);
