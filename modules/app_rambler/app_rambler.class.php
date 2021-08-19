@@ -311,7 +311,8 @@ class app_rambler extends module {
 	}
 	
 	function autoLinkProp($url_path, $city_id, $type) {
-		$url_path_obj = substr($url_path, 2);
+		//$url_path_obj = substr($url_path, 2);
+		$url_path_obj = str_replace('-','_',$url_path);
 		addClass('app_rambler');
 		addClassObject('app_rambler', $url_path_obj);
 		
@@ -489,6 +490,9 @@ class app_rambler extends module {
 			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
 			$daylightsec = $data['date_weather']['daylight'];
 			$data["date_weather"]["daylight_H_i"] = date_format(new DateTime("@$daylightsec"),'H:i');
+			//добавим название города
+			$data["date_weather"]["name_town"] = $data["town"]["name"];
+			
 			
 			
 			unset($data["date_weather"]["alert_text_short"]);
