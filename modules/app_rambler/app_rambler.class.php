@@ -809,9 +809,7 @@ class app_rambler extends module {
 	}
 	
 	function processSubscription($event, $details='') {
-		$date = date('i', time());
-		
-		if ($event=='MINUTELY' && ($date == '00' || $date == '20' || $date == '40')) {
+		if($event=='MINUTELY' && date('i', time()) % 20 == 0) {
 			$this->loadDataCycle();
 		}
 	}
@@ -823,7 +821,7 @@ class app_rambler extends module {
 	}
 	
 	function uninstall() {
-		unsubscribeFromEvent($this->name, 'HOURLY');
+		unsubscribeFromEvent($this->name, 'MINUTELY');
 		
 		$this->DeleteLinkedProperties();
 
