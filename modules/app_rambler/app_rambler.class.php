@@ -486,8 +486,8 @@ class app_rambler extends module {
 			$data["date_weather"]["icon_text"] = $this->iconText($data["date_weather"]["icon"]);
 			$data["date_weather"]["roadway_visibility_points"] = $data["date_weather"]["roadway_visibility"]["points"];
 			$data["date_weather"]["roadway_visibility_description"] = $data["date_weather"]["roadway_visibility"]["description"];
-			$data["date_weather"]["sunset"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunset"]));
-			$data["date_weather"]["sunrise"] = date('d.m.Y H:i:s', strtotime($data["date_weather"]["sunrise"]));
+			$data["date_weather"]["sunset"] = date('H:i:s', strtotime($data["date_weather"]["sunset"]));
+			$data["date_weather"]["sunrise"] = date('H:i:s', strtotime($data["date_weather"]["sunrise"]));
 			$daylightsec = $data['date_weather']['daylight'];
 			$data["date_weather"]["daylight_H_i"] = date_format(new DateTime("@$daylightsec"),'H:i');
 			//добавим название города
@@ -844,7 +844,7 @@ class app_rambler extends module {
 		rambler_weather_value: ID int(15) unsigned NOT NULL auto_increment
         rambler_weather_value: CITY_ID varchar(100) NOT NULL DEFAULT ''
         rambler_weather_value: TITLE varchar(255) NOT NULL DEFAULT ''
-        rambler_weather_value: VALUE varchar(255) NOT NULL DEFAULT ''
+        rambler_weather_value: VALUE varchar(1024) NOT NULL DEFAULT ''
         rambler_weather_value: UPDATE varchar(255) NOT NULL DEFAULT ''
         rambler_weather_value: LINKED_OBJECT varchar(100) NOT NULL DEFAULT ''
         rambler_weather_value: LINKED_PROPERTY varchar(100) NOT NULL DEFAULT ''
