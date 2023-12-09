@@ -364,14 +364,16 @@ class app_rambler extends module {
 			$getAllCity = SQLSelect("SELECT * FROM rambler_weather_city");
 		}
 		
-		foreach($getAllCity as $key => $value) {
-			$data = $this->callAPI('https://www.rambler.ru/api/v4/header', $value['GEO_CODE']);
-			$data = json_decode($data, TRUE);
+		//foreach($getAllCity as $key => $value) {
+		//	$data = $this->callAPI('https://www.rambler.ru/api/v4/header', $value['GEO_CODE']);
+		//	$data = json_decode($data, TRUE);
 			
 			//Отправим в функцию для получения пробок
-			$this->loadTraffic($data["traffic"], $value['ID']);
+		//	$this->loadTraffic($data["traffic"], $value['ID']);
 
-
+		foreach($getAllCity as $key => $value) {
+			$data = $this->callAPI('https://www.rambler.ru/api/v4/header/');
+			$data = json_decode($data, TRUE);
 			
 			foreach($data["currencies"] as $keycurrencies => $valuecurrencies) {
 				$rec['TITLE'] = 'currencies.'.$valuecurrencies['code'];
