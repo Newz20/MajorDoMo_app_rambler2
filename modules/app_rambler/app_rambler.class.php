@@ -707,11 +707,25 @@ class app_rambler extends module {
 	function usual(&$out) {
 		//Обработка AJAX 
 		global $request;
+		global $q;
 		
 		if($this->ajax == 1 && $request == 'whereiam') {
-			echo $this->whereiam();
+			$data = $this->whereiam();
+			$data = json_decode($data, TRUE);
+			
+			$data = $this->callAPI('https://weather.rambler.ru/api/v3/suggest/?query='.urlencode($data['name']).'&count=1');
+			
+			echo $data;
 			die();
     	}
+		
+		if($this->ajax == 1 && $request == 'findcity' && !empty($q)) {
+			$data = $this->callAPI('https://weather.rambler.ru/api/v3/suggest/?query='.urlencode($q).'&count=10');
+	
+			echo $data;
+			die();
+    	}
+		
 		global $url_path;
 
 		if(isset($url_path)) {

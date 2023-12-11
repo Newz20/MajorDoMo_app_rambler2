@@ -10,11 +10,13 @@ function searchCity() {
 		$('#loaderResult').hide('fast');
 		$('#result').hide();
 	}
+	//findcity
 	
 	$.ajax({
-		url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(input)+'&count=10',
+		//url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(input)+'&count=10',
+		url: '/ajax/app_rambler.html?ajax=1&request=findcity&q='+encodeURI(input),
 		success: function(data){
-			//data = JSON.parse(data);
+			data = JSON.parse(data);
 			//console.log(data.items[0]);
 			$('#result').html('');
 			
@@ -46,17 +48,13 @@ function whereiam() {
 		success: function(data){
 			data = JSON.parse(data);
 
-			$.ajax({
-				url: 'https://weather.rambler.ru/api/v3/suggest/?query='+encodeURI(data.name)+'&count=1',
-				success: function(data){
-					if(data.items[0].temperature > 0) data.items[0].temperature_simb = '+';
-					$('#loaderWhereIAm').hide();
-					$('#whereiamresult').html('<li class="list-group-item" style="border: 1px solid green;margin-bottom: 10px;">'+
-					'<span class="badge" style="background: white;color: black;padding: 0px;margin-top: -5px;font-size: 1.5rem;"><img style="width: 30px;vertical-align: middle;" src="/templates/app_rambler/assets/icons/fill/all/'+data.items[0].type+'.svg">' +data.items[0].temperature_simb+data.items[0].temperature+'</span>'+
-					'<a href="?view_mode=citysearch&id='+data.items[0].url_path+'" style="text-decoration: none;">'+
-					'<span class="badge" style="margin-right: 10px;background:#5cb85c">Мой город</span> <span style="color:gray">'+data.items[0].region+' → </span><b>'+data.items[0].city+'</b></a></li>');
-				}
-			});
+
+			if(data.items[0].temperature > 0) data.items[0].temperature_simb = '+';
+			$('#loaderWhereIAm').hide();
+			$('#whereiamresult').html('<li class="list-group-item" style="border: 1px solid green;margin-bottom: 10px;">'+
+			'<span class="badge" style="background: white;color: black;padding: 0px;margin-top: -5px;font-size: 1.5rem;"><img style="width: 30px;vertical-align: middle;" src="/templates/app_rambler/assets/icons/fill/all/'+data.items[0].type+'.svg">' +data.items[0].temperature+'</span>'+
+			'<a href="?view_mode=citysearch&id='+data.items[0].url_path+'" style="text-decoration: none;">'+
+			'<span class="badge" style="margin-right: 10px;background:#5cb85c">Мой город</span> <span style="color:gray">'+data.items[0].region+' → </span><b>'+data.items[0].city+'</b></a></li>');
 		}
 	});
 }
