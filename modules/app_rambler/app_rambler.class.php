@@ -253,6 +253,7 @@ class app_rambler extends module {
 	  }
 		
 	function magneticText($num) {
+		if($num == "") $num = 10;
 		$magnetic = array(
 			"0" => "Спокойное магнитное поле",
 			"1" => "Неустойчивое магнитное поле",
@@ -260,6 +261,7 @@ class app_rambler extends module {
 			"3" => "Возмущённое магнитное поле",
 			"4" => "Магнитная буря",
 			"5" => "Большая магнитная буря",
+			"10" => "Информация отсутствует",
 		);
 
 		return $magnetic[$num];
@@ -370,24 +372,26 @@ class app_rambler extends module {
 			
 			//Отправим в функцию для получения пробок
 			//$this->loadTraffic($data["traffic"], $value['ID']);
-
-			foreach($data["currencies"] as $keycurrencies => $valuecurrencies) {
-				$rec['TITLE'] = 'currencies.'.$valuecurrencies['code'];
-				$rec['VALUE'] = $valuecurrencies['value'];
-				$rec['CITY_ID'] = $value['ID'];
-				$rec['UPDATE'] = time();
-				
-				$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$rec['TITLE']."' AND CITY_ID = '".$rec['CITY_ID']."'");
-				if(!$ifExist) {
-					SQLInsert('rambler_weather_value', $rec);
-				} else {
-					//Обновляем свойства
-					$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
-						
-					if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
+			
+			if(isset($data["currencies"]) and is_array($data["currencies"])){
+				foreach($data["currencies"] as $keycurrencies => $valuecurrencies) {
+					$rec['TITLE'] = 'currencies.'.$valuecurrencies['code'];
+					$rec['VALUE'] = $valuecurrencies['value'];
+					$rec['CITY_ID'] = $value['ID'];
+					$rec['UPDATE'] = time();
 					
-					$rec['ID'] = $ifExist['ID'];
-					SQLUpdate('rambler_weather_value', $rec);
+					$ifExist = SQLSelectOne("SELECT * FROM rambler_weather_value WHERE TITLE = '".$rec['TITLE']."' AND CITY_ID = '".$rec['CITY_ID']."'");
+					if(!$ifExist) {
+						SQLInsert('rambler_weather_value', $rec);
+					} else {
+						//Обновляем свойства
+						$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $rec['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+							
+						if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
+						
+						$rec['ID'] = $ifExist['ID'];
+						SQLUpdate('rambler_weather_value', $rec);
+					}
 				}
 			}
 		}
@@ -517,7 +521,7 @@ class app_rambler extends module {
 						
 						if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
 						
-						if($ifExist['GEO_CODE'] != $data["town"]["geo_id"]) {
+						if(!isset($ifExist['GEO_CODE']) or $ifExist['GEO_CODE'] != $data["town"]["geo_id"]) {
 							//Обновим GEO ID он нам понадобится дальше
 							SQLExec("UPDATE rambler_weather_city SET GEO_CODE = '".$data["town"]["geo_id"]."' WHERE ID = '".$value['ID']."'");
 						}
@@ -623,7 +627,7 @@ class app_rambler extends module {
 				
 			} else {
 				//Обновляем свойства
-				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $value['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $value['VALUE'], $ifExist['VALUE'], isset($value['ID']) ? $value['ID'] : '', $value['TITLE']);
 				$value['ID'] = $ifExist['ID'];		
 				if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
 				SQLUpdate('rambler_weather_value', $value);
@@ -675,7 +679,7 @@ class app_rambler extends module {
 				
 			} else {
 				//Обновляем свойства
-				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $value['VALUE'], $ifExist['VALUE'], $value['ID'], $value['TITLE']);
+				$this->setPropByNewValue($ifExist['LINKED_OBJECT'], $ifExist['LINKED_PROPERTY'], $ifExist['LINKED_METHOD'], $value['VALUE'], $ifExist['VALUE'], isset($value['ID']) ? $value['ID'] : '', $value['TITLE']);
 				$value['ID'] = $ifExist['ID'];		
 				if($cycleupdate != 0 && empty($ifExist['LINKED_OBJECT']) && empty($ifExist['LINKED_PROPERTY']) && empty($ifExist['LINKED_METHOD'])) continue;
 				SQLUpdate('rambler_weather_value', $value);
