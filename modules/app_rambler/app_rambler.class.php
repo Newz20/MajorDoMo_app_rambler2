@@ -247,6 +247,7 @@ class app_rambler extends module {
 		  "SW" => "Юго-западный",
 		  "W" => "Западный",
 		  "NW" => "Северо-западный",
+		  "C" => "Штиль",
 		);
 	
 		return $wind[$text];
